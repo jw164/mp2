@@ -1,12 +1,18 @@
-.container { padding: 1rem; max-width: 1200px; margin: 0 auto; }
-.controls { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin: .5rem 0 1rem; }
-.input { padding: .5rem; min-width: 260px; }
-.select { padding: .5rem; }
-.grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
-.card { border: 1px solid #eee; border-radius: 12px; padding: .75rem; background: #fff; text-decoration: none; color: inherit; }
-.thumb { width: 100%; aspect-ratio: 1 / 1; object-fit: contain; }
-.title { margin: .4rem 0 0; text-transform: capitalize; font-weight: 600; }
-.chips { display: flex; flex-wrap: wrap; gap: .5rem; }
-.chip { padding: .25rem .6rem; border: 1px solid #ddd; border-radius: 999px; text-transform: capitalize; background: #fff; cursor: pointer; }
-.active { border: 2px solid #111; background: #f6f6f6; }
-.nav { display: flex; gap: .5rem; align-items: center; margin: .5rem 0 1rem; }
+nav {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #f6f6f6;
+  border-bottom: 1px solid #ddd;
+}
+
+a {
+  color: #333;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+a.active {
+  color: #0070f3;
+  text-decoration: underline;
+}
