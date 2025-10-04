@@ -8,7 +8,6 @@ export default function App() {
       <Routes>
         <Route path="/" element={<ListView />} />
         <Route path="/pokemon/:id" element={<DetailView />} />
-        {/* Fallback route: redirect any unknown path to the list */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
