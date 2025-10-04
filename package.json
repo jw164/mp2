@@ -1,0 +1,24 @@
+{
+  "name": "mp2",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": "https://jw164.github.io/mp2",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "normalize.css": "^8.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.6.2"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  }
+}
