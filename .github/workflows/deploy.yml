@@ -20,6 +20,8 @@ jobs:
           node-version: 20
       - run: npm ci || npm i
       - run: npm run build
+        env:
+          CI: false
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build
@@ -32,3 +34,4 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
