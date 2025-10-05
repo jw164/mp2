@@ -1,135 +1,54 @@
-/* ---------- Gallery 卡片轻微动效 ---------- */
-.card {
-  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-}
-.card:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-  border-color: #ddd;
+/* src/styles/layout.module.css */
+
+.container {
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-/* ---------- 详情页布局 ---------- */
-.detail {}
-
-.hero {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 1.25rem;
+.controls {
+  display: flex;
+  gap: .5rem;
   align-items: center;
-  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  margin: .5rem 0 1rem;
 }
 
-.heroImg {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: contain;
-  background: #fff;
+.input { padding: .5rem; min-width: 260px; }
+.select { padding: .5rem; }
+
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
   border: 1px solid #eee;
   border-radius: 12px;
   padding: .75rem;
-}
-
-.meta {}
-
-.kv {
-  margin: .75rem 0 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: .5rem .75rem;
-}
-
-/* ---------- 翻页区域 ---------- */
-.pager {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: .5rem;
-  margin-bottom: .75rem;
-}
-
-.pagerControls {
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-  justify-content: center;
-}
-
-.pagerId {
-  font-weight: 700;
-  min-width: 3.5rem;
-  text-align: center;
-}
-
-/* 统一按钮外观（a/button均可） */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: .25rem;
-  height: 34px;
-  padding: 0 .75rem;
-  border: 1px solid #ddd;
-  border-radius: 999px;
   background: #fff;
   text-decoration: none;
   color: inherit;
-  cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease, transform 120ms ease;
-}
-.btn:hover {
-  background: #f9f9f9;
-  border-color: #ccc;
-}
-.btn:active {
-  transform: translateY(1px);
-}
-.btn:disabled,
-.btn[disabled] {
-  opacity: .55;
-  cursor: not-allowed;
 }
 
-/* ---------- Stats ---------- */
-.h2 {
-  font-size: 1.1rem;
-  margin: .25rem 0 .5rem;
+.thumb {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
 }
 
-.statsGrid {
-  display: grid;
-  gap: .5rem;
-}
+.title { margin: .25rem 0 0; text-transform: capitalize; font-weight: 600; }
+.id { font-size: .85rem; color: #666; }
 
-.statRow {
-  display: grid;
-  grid-template-columns: 120px 1fr 40px;
-  align-items: center;
-  gap: .5rem;
-}
+.nav { display: flex; gap: .5rem; align-items: center; margin: .5rem 0 1rem; }
 
-.statName {
-  text-transform: capitalize;
+.active {
+  border: 2px solid #111;
+  background: #f6f6f6;
 }
-
-.barWrap {
-  position: relative;
-  height: 10px;
-  border-radius: 999px;
-  background: #f1f1f1;
-  overflow: hidden;
-  border: 1px solid #e6e6e6;
-}
-
-.bar {
-  height: 100%;
-  background: linear-gradient(90deg, #8ec5ff, #4aa3ff);
-}
-.statVal {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-
 
