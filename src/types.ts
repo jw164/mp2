@@ -1,7 +1,6 @@
-// src/types.ts
 export type PokemonListItem = {
   name: string;
-  url: string; // e.g. https://pokeapi.co/api/v2/pokemon/1/
+  url: string;
 };
 
 export type Pokemon = {
@@ -16,6 +15,6 @@ export type Pokemon = {
       ["official-artwork"]?: { front_default?: string | null };
     };
   };
-  // used by GalleryView filters
   types?: { slot: number; type: { name: string; url: string } }[];
+  stats?: { base_stat: number; stat: { name: string } }[];
 };
