@@ -1,8 +1,7 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
 import ListView from "./pages/ListView";
 import GalleryView from "./pages/GalleryView";
 import DetailView from "./pages/DetailView";
-import NavBar from "./components/NavBar";
 import s from "./styles/layout.module.css";
 
 export default function App() {
@@ -10,9 +9,14 @@ export default function App() {
     <BrowserRouter basename="/mp2">
       <nav className={s.nav}>
         <strong>PokéDex</strong>
-        <a href="/">List</a>
-        <a href="/gallery">Gallery</a>
+        <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : undefined)}>
+          List
+        </NavLink>
+        <NavLink to="/gallery" className={({ isActive }) => (isActive ? "active" : undefined)}>
+          Gallery
+        </NavLink>
       </nav>
+
       <Routes>
         <Route path="/" element={<ListView />} />
         <Route path="/gallery" element={<GalleryView />} />
@@ -21,4 +25,3 @@ export default function App() {
     </BrowserRouter>
   );
 }
-
