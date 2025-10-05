@@ -1,95 +1,182 @@
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { getPokemonById } from "../api/pokeApi";
 import type { Pokemon } from "../types";
+import { getPokemonById } from "../api/pokeApi";
 import s from "../styles/layout.module.css";
 
 const MIN_ID = 1;
-const MAX_ID = 120;
+const MAX_ID = 1010; // PokeAPI 常见上限，够用即可
 
-function art(p?: Pokemon) {
+function artOf(p: Pokemon) {
   return (
-    p?.sprites.other?.["official-artwork"]?.front_default ??
-    p?.sprites.front_default ??
+    p.sprites.other?.["official-artwork"]?.front_default ||
+    p.sprites.other?.dream_world?.front_default ||
+    p.sprites.front_default ||
     ""
   );
 }
 
 export default function DetailView() {
-  const { id } = useParams();
-  const current = Number(id);
+  const { id: idParam } = useParams();
+  const id = useMemo(() => Number(idParam ?? 0), [idParam]);
+  const nav = useNavigate();
+
   const [data, setData] = useState<Pokemon | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
-  const navigate = useNavigate();
 
+  // 读取详情
   useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        setErr(null);
-        const d = await getPokemonById(current);
-        setData(d);
-      } catch {
-        setErr("Failed to load details.");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [current]);
+    let on = true;
+    setLoading(true);
+    setErr(null);
+    setData(null);
 
-  const prevId = current <= MIN_ID ? MAX_ID : current - 1;
-  const nextId = current >= MAX_ID ? MIN_ID : current + 1;
+    if (!id || Number.isNaN(id)) {
+      setErr("Invalid id");
+      setLoading(false);
+      return;
+    }
+    getPokemonById(id)
+      .then((p) => {
+        if (on) setData(p);
+      })
+      .catch((e) => {
+        if (on) setErr(String(e));
+      })
+      .finally(() => {
+        if (on) setLoading(false);
+      });
+
+    return () => {
+      on = false;
+    };
+  }, [id]);
+
+  // Prev / Next id（边界保护）
+  const prevId = Math.max(MIN_ID, id - 1);
+  const nextId = Math.min(MAX_ID, id + 1);
+
+  // 键盘左右箭头也可切换
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "ArrowLeft" && id > MIN_ID) nav(`/pokemon/${prevId}`);
+      if (e.key === "ArrowRight" && id < MAX_ID) nav(`/pokemon/${nextId}`);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [id, prevId, nextId, nav]);
+
+  if (loading) {
+    return (
+      <main className={s.container}>
+        <p>Loading…</p>
+      </main>
+    );
+  }
+
+  if (err || !data) {
+    return (
+      <main className={s.container}>
+        <p>Failed to load. {err}</p>
+        <Link to="/">⟵ Back to list</Link>
+      </main>
+    );
+  }
+
+  const img = artOf(data);
+  const name = data.name;
 
   return (
-    <main className="page">
-      <div className={s.navRow}>
-        <Link className={s.btn} to="/">← Back to List</Link>
-        <span className={s.flexGrow} />
-        <button className={s.btn} onClick={() => navigate(`/pokemon/${prevId}`)}>← Prev</button>
-        <button className={s.btn} onClick={() => navigate(`/pokemon/${nextId}`)}>Next →</button>
+    <main className={`${s.container} ${s.detail}`}>
+      {/* 顶部导航与翻页 */}
+      <div className={s.pager}>
+        <Link className={s.btn} to="/">
+          ⟵ Back
+        </Link>
+
+        <div className={s.pagerControls}>
+          <button
+            type="button"
+            className={s.btn}
+            onClick={() => nav(`/pokemon/${prevId}`)}
+            disabled={id <= MIN_ID}
+            aria-label="Previous Pokémon"
+            title="Previous (←)"
+          >
+            ← Prev
+          </button>
+          <span className={s.pagerId}>#{id}</span>
+          <button
+            type="button"
+            className={s.btn}
+            onClick={() => nav(`/pokemon/${nextId}`)}
+            disabled={id >= MAX_ID}
+            aria-label="Next Pokémon"
+            title="Next (→)"
+          >
+            Next →
+          </button>
+        </div>
+
+        <Link className={s.btn} to="/gallery">
+          Gallery
+        </Link>
       </div>
 
-      {err && <p role="alert">{err}</p>}
-      {loading || !data ? (
-        <p>Loading…</p>
-      ) : (
-        <section className={s.detail}>
-          <img className={s.hero} src={art(data)} alt={data.name} />
-          <div className={s.meta}>
-            <h1 className={s.capitalize}>
-              #{data.id} {data.name}
-            </h1>
+      {/* 视觉主区域 */}
+      <section className={s.hero}>
+        {img && <img className={s.heroImg} src={img} alt={name} />}
+        <div className={s.meta}>
+          <h1 className={s.title}>
+            #{data.id} {name}
+          </h1>
 
-            <div className={s.kv}>
-              <div>Base EXP</div><div>{data.base_experience}</div>
-              <div>Height</div><div>{data.height}</div>
-              <div>Weight</div><div>{data.weight}</div>
-            </div>
-
-            <div>
-              <div className={s.sectionTitle}>Types</div>
-              <div className={s.pills}>
-                {data.types?.map((t) => (
-                  <span key={t.type.name} className={s.pill}>{t.type.name}</span>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div className={s.sectionTitle}>Stats</div>
-              <div className={s.kv}>
-                {data.stats?.map((st) => (
-                  <Fragment key={st.stat.name}>
-                    <div className={s.capitalize}>{st.stat.name}</div>
-                    <div>{st.base_stat}</div>
-                  </Fragment>
-                ))}
-              </div>
-            </div>
+          {/* 类型 */}
+          <div className={s.chips} aria-label="Types">
+            {data.types.map((t) => (
+              <span key={t.slot} className={s.chip}>
+                {t.type.name}
+              </span>
+            ))}
           </div>
-        </section>
-      )}
+
+          {/* 身高体重等 */}
+          <ul className={s.kv}>
+            <li>
+              <strong>Height:</strong> {data.height}
+            </li>
+            <li>
+              <strong>Weight:</strong> {data.weight}
+            </li>
+            <li>
+              <strong>Base Exp:</strong> {data.base_experience}
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      {/* 能力值 */}
+      <section className={s.stats}>
+        <h2 className={s.h2}>Base Stats</h2>
+        <div className={s.statsGrid}>
+          {data.stats.map((st) => (
+            <div key={st.stat.name} className={s.statRow}>
+              <span className={s.statName}>{st.stat.name}</span>
+              <div className={s.barWrap} aria-label={st.stat.name}>
+                <div
+                  className={s.bar}
+                  style={{ width: `${Math.min(100, st.base_stat)}%` }}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={st.base_stat}
+                />
+              </div>
+              <span className={s.statVal}>{st.base_stat}</span>
+            </div>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
