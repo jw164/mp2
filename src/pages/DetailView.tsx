@@ -1,73 +1,145 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
-import { getPokemonById } from "../api/pokeApi";
-import type { Pokemon } from "../types";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import s from "../styles/layout.module.css";
+import type { Pokemon } from "../types";
+import { getPokemonById } from "../api/pokeApi";
 
-function artOf(p: Pokemon) {
-  const other = (p.sprites as any)?.other ?? {};
+function usePokemon(id: number) {
+  const [data, setData] = useState<Pokemon | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    setError(null);
+    getPokemonById(id)
+      .then((p) => {
+        if (alive) setData(p);
+      })
+      .catch((e) => {
+        if (alive) setError(e?.message ?? "Failed to fetch");
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [id]);
+
+  return { data, loading, error };
+}
+
+function spriteUrl(p?: Pokemon | null): string {
+  if (!p) return "";
   return (
-    other["official-artwork"]?.front_default ||
-    other["dream_world"]?.front_default ||
+    p.sprites.other?.["official-artwork"]?.front_default ||
     p.sprites.front_default ||
     ""
   );
 }
 
 export default function DetailView() {
-  const { id } = useParams();
-  const pid = Number(id);
-  const nav = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const currentId = Number(id || 1);
+  const navigate = useNavigate();
 
-  const [data, setData] = useState<Pokemon | null>(null);
+  const { data, loading, error } = usePokemon(currentId);
 
-  useEffect(() => {
-    (async () => {
-      if (!pid) return;
-      const d = await getPokemonById(pid);
-      setData(d);
-    })();
-  }, [pid]);
+  const title = useMemo(() => {
+    if (!data) return "";
+    const name = data.name[0].toUpperCase() + data.name.slice(1);
+    return `#${data.id} ${name}`;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.id, data?.name]);
 
-  const img = useMemo(() => (data ? artOf(data) : ""), [data]);
+  if (loading) {
+    return (
+      <main className={s.container}>
+        <h1 className={s.title}>Loading…</h1>
+      </main>
+    );
+  }
 
-  if (!pid) return <main className="page"><p>Invalid id.</p></main>;
-  if (!data) return <main className="page"><p>Loading…</p></main>;
+  if (error || !data) {
+    return (
+      <main className={s.container}>
+        <h1 className={s.title}>Not available</h1>
+        <p>{error ?? "No data"}</p>
+        <Link to="/" className={s.card}>
+          Go back
+        </Link>
+      </main>
+    );
+  }
 
-  const prev = pid > 1 ? pid - 1 : 1;
-  const next = pid + 1;
+  const art = spriteUrl(data);
 
   return (
-    <main className="page">
-      <h1>#{data.id} {data.name}</h1>
+    <main className={s.container}>
+      <h1 className={s.title}>{title}</h1>
 
-      <div className={s.hero}>
-        {img && <img src={img} alt={data.name} className={s.heroImg} />}
-        <ul className={s.chips}>
-          {data.types.map((t) => (
-            <li key={t.slot} className={s.chip}>{t.type.name}</li>
-          ))}
-        </ul>
-      </div>
-
-      <section className={s.stats}>
-        <h3>Stats</h3>
-        <ul>
-          {data.stats.map((st) => (
-            <li key={st.stat.name}>{st.stat.name}: {st.base_stat}</li>
-          ))}
-          <li>height: {data.height}</li>
-          <li>weight: {data.weight}</li>
-          {data.base_experience != null && (
-            <li>base_experience: {data.base_experience}</li>
+      <div className={s.grid}>
+        {/* left: image */}
+        <article className={s.card}>
+          {art ? (
+            <img className={s.thumb} src={art} alt={data.name} />
+          ) : (
+            <div className={s.thumb} aria-label="no image" />
           )}
-        </ul>
-      </section>
+        </article>
 
-      <div className={s.controls}>
-        <button onClick={() => nav(`/pokemon/${prev}`)}>◀ Prev</button>
-        <Link to="/">Back to List</Link>
-        <button onClick={() => nav(`/pokemon/${next}`)}>Next ▶</button>
+        {/* right: facts */}
+        <article className={s.card}>
+          <h2 className={s.title} style={{ margin: 0 }}>Overview</h2>
+          <ul>
+            <li>height: {data.height}</li>
+            <li>weight: {data.weight}</li>
+            {"base_experience" in data && (data as any).base_experience != null && (
+              <li>base_experience: {(data as any).base_experience}</li>
+            )}
+          </ul>
+
+          <div className={s.chips}>
+            {data.types.map((t) => (
+              <span key={t.type.name} className={s.chip}>
+                {t.type.name}
+              </span>
+            ))}
+          </div>
+
+          <h3 className={s.title} style={{ marginTop: "1rem" }}>Stats</h3>
+          <ul>
+            {data.stats.map((st) => (
+              <li key={st.stat.name}>
+                {st.stat.name}: {st.base_stat}
+              </li>
+            ))}
+          </ul>
+
+          <div className={s.nav}>
+            <button
+              className={s.chip}
+              disabled={currentId <= 1}
+              onClick={() => navigate(`/pokemon/${currentId - 1}`)}
+            >
+              Prev
+            </button>
+            <button
+              className={s.chip}
+              onClick={() => navigate(`/pokemon/${currentId + 1}`)}
+            >
+              Next
+            </button>
+            <Link to="/" className={s.chip}>
+              Back to List
+            </Link>
+            <Link to="/gallery" className={s.chip}>
+              Gallery
+            </Link>
+          </div>
+        </article>
       </div>
     </main>
   );
