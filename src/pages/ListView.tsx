@@ -1,130 +1,99 @@
+// src/pages/ListView.tsx
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import s from "../styles/layout.module.css";
 import { getPokemonList } from "../api/pokeApi";
 import type { PokemonListItem } from "../types";
-import s from "../styles/layout.module.css";
 
 type SortKey = "name" | "id";
-type Dir = "asc" | "desc";
+type Order = "asc" | "desc";
 
-function idFromUrl(url: string) {
+function getIdFromUrl(url: string) {
+  // PokeAPI 列表里每个条目都有 .../pokemon/1/ 这样的 url
   const parts = url.split("/").filter(Boolean);
   return Number(parts[parts.length - 1]);
 }
-function artUrl(id: number) {
+
+function artworkUrl(id: number) {
+  // 用官方 artwork CDN，列表不需要逐个打详情接口
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
 }
 
 export default function ListView() {
-  const [all, setAll] = useState<PokemonListItem[]>([]);
+  const [rawList, setRawList] = useState<PokemonListItem[]>([]);
   const [q, setQ] = useState("");
-  const [key, setKey] = useState<SortKey>("name");
-  const [dir, setDir] = useState<Dir>("asc");
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<SortKey>("name");
+  const [order, setOrder] = useState<Order>("asc");
 
   useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        const list = await getPokemonList(120, 0);
-        setAll(list);
-      } catch {
-        setErr("Failed to load from PokeAPI.");
-      } finally {
-        setLoading(false);
-      }
-    })();
+    getPokemonList(151, 0).then(setRawList).catch(console.error);
   }, []);
 
-  const filtered = useMemo(() => {
-    const f = all.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));
-    const sorted = [...f].sort((a, b) => {
-      const A = key === "name" ? a.name : idFromUrl(a.url);
-      const B = key === "name" ? b.name : idFromUrl(b.url);
-      return A < B ? -1 : A > B ? 1 : 0;
+  const list = useMemo(() => {
+    const withId = rawList.map((it) => ({
+      ...it,
+      id: getIdFromUrl(it.url),
+    }));
+
+    const filtered = q.trim()
+      ? withId.filter((it) =>
+          it.name.toLowerCase().includes(q.trim().toLowerCase())
+        )
+      : withId;
+
+    const sorted = [...filtered].sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === "name") cmp = a.name.localeCompare(b.name);
+      else cmp = a.id - b.id;
+      return order === "asc" ? cmp : -cmp;
     });
-    return dir === "asc" ? sorted : sorted.reverse();
-  }, [all, q, key, dir]);
+
+    return sorted;
+  }, [rawList, q, sortBy, order]);
 
   return (
-    <main className="page">
+    <main className={s.container}>
       <h1>Pokémon List</h1>
 
-      <section className={s.panel}>
-        <div className={s.field}>
-          <input
-            className={s.inputFull}
-            type="search"
-            placeholder="Search Pokémon by name…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            aria-label="search"
-          />
-        </div>
+      <div className={s.controls}>
+        <input
+          className={`${s.input}`}
+          placeholder="Search Pokémon by name..."
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
 
-        <div className={s.field}>
-          <label className={s.labelBlock}>Sort by:</label>
-          <select
-            className={s.selectFull}
-            value={key}
-            onChange={(e) => setKey(e.target.value as SortKey)}
-            aria-label="sort key"
-          >
-            <option value="name">Name</option>
-            <option value="id">ID</option>
-          </select>
-        </div>
+        <select
+          className={s.select}
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as SortKey)}
+        >
+          <option value="name">Sort by: Name</option>
+          <option value="id">Sort by: ID</option>
+        </select>
 
-        <div className={s.radioGroup} role="group" aria-label="order">
-          <label>
-            <input
-              type="radio"
-              name="order"
-              value="asc"
-              checked={dir === "asc"}
-              onChange={() => setDir("asc")}
-            />{" "}
-            ascending
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="order"
-              value="desc"
-              checked={dir === "desc"}
-              onChange={() => setDir("desc")}
-            />{" "}
-            descending
-          </label>
-        </div>
+        <select
+          className={s.select}
+          value={order}
+          onChange={(e) => setOrder(e.target.value as Order)}
+        >
+          <option value="asc">Ascending ↑</option>
+          <option value="desc">Descending ↓</option>
+        </select>
+      </div>
+
+      <section className={s.grid}>
+        {list.map((it) => {
+          const id = getIdFromUrl(it.url);
+          return (
+            <Link to={`/pokemon/${id}`} key={it.name} className={s.card}>
+              <img className={s.thumb} src={artworkUrl(id)} alt={it.name} />
+              <div className={s.title}>{it.name}</div>
+              <div className={s.id}>#{id}</div>
+            </Link>
+          );
+        })}
       </section>
-
-      {err && <p role="alert">{err}</p>}
-      {loading ? (
-        <p>Loading…</p>
-      ) : (
-        <ul className={s.listBlock}>
-          {filtered.map((p) => {
-            const id = idFromUrl(p.url);
-            return (
-              <li key={p.name} className={s.item}>
-                <img className={s.thumbSmall} src={artUrl(id)} alt={p.name} loading="lazy" />
-                <div>
-                  <Link to={`/pokemon/${id}`} className={`${s.nameLink} ${s.capitalize}`}>
-                    {p.name}
-                  </Link>
-                  <div className={s.rank}>#{id}</div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
     </main>
   );
 }
-
-
-
-
