@@ -19,32 +19,18 @@ Create React App Docs: https://create-react-app.dev/
 All implementation and styling were written by Jintao Wang (jw164).  
 No code was copied directly from external sources; references above were used solely for documentation and conceptual clarity.
 
-
-```src/
+src/
 ├── components/
-
-│ └── NavBar.tsx
-
+│   └── NavBar.tsx
 ├── pages/
-
-│ ├── ListView.tsx
-
-│ ├── GalleryView.tsx
-
-│ ├── DetailView.tsx
-
-│ └── NotFound.tsx
-
+│   ├── ListView.tsx
+│   ├── GalleryView.tsx
+│   ├── DetailView.tsx
+│   └── NotFound.tsx
 ├── styles/
-
-│ └── layout.module.css
-
+│   └── layout.module.css
 ├── App.tsx
-
 └── index.tsx
-
-
----```
 
 
 
