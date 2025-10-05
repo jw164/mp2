@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getPokemonById } from "../api/pokeApi";
 import type { Pokemon } from "../types";
@@ -45,7 +45,7 @@ export default function DetailView() {
     <main className="page">
       <div className={s.navRow}>
         <Link className={s.btn} to="/">← Back to List</Link>
-        <div style={{ flex: 1 }} />
+        <span className={s.flexGrow} />
         <button className={s.btn} onClick={() => navigate(`/pokemon/${prevId}`)}>← Prev</button>
         <button className={s.btn} onClick={() => navigate(`/pokemon/${nextId}`)}>Next →</button>
       </div>
@@ -68,7 +68,7 @@ export default function DetailView() {
             </div>
 
             <div>
-              <div style={{ marginBottom: 6 }}>Types</div>
+              <div className={s.sectionTitle}>Types</div>
               <div className={s.pills}>
                 {data.types?.map((t) => (
                   <span key={t.type.name} className={s.pill}>{t.type.name}</span>
@@ -77,7 +77,7 @@ export default function DetailView() {
             </div>
 
             <div>
-              <div style={{ margin: "10px 0 6px" }}>Stats</div>
+              <div className={s.sectionTitle}>Stats</div>
               <div className={s.kv}>
                 {data.stats?.map((st) => (
                   <Fragment key={st.stat.name}>
@@ -93,5 +93,3 @@ export default function DetailView() {
     </main>
   );
 }
-
-import { Fragment } from "react";
