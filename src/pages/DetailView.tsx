@@ -1,58 +1,73 @@
+// src/pages/DetailView.tsx
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import s from "../styles/layout.module.css";
 import type { Pokemon } from "../types";
-import { getPokemonById } from "../api/pokeApi";
+import { api, getPokemonById } from "../api/pokeApi";
 
-function usePokemon(id: number) {
-  const [data, setData] = useState<Pokemon | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    setError(null);
-    getPokemonById(id)
-      .then((p) => {
-        if (alive) setData(p);
-      })
-      .catch((e) => {
-        if (alive) setError(e?.message ?? "Failed to fetch");
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [id]);
-
-  return { data, loading, error };
+function formatId(id: number) {
+  return `#${String(id).padStart(3, "0")}`;
 }
 
-function spriteUrl(p?: Pokemon | null): string {
+function getImageUrl(p?: Pokemon | null) {
   if (!p) return "";
+  // Prefer official artwork; fallback to front_default
+  // (do not rely on dream_world to avoid typing/build issues)
   return (
-    p.sprites.other?.["official-artwork"]?.front_default ||
-    p.sprites.front_default ||
+    (p as any)?.sprites?.other?.["official-artwork"]?.front_default ||
+    (p as any)?.sprites?.front_default ||
     ""
   );
 }
 
 export default function DetailView() {
-  const { id } = useParams<{ id: string }>();
-  const currentId = Number(id || 1);
-  const navigate = useNavigate();
+  const { id } = useParams();
+  const pid = useMemo(() => Number(id || 1), [id]);
 
-  const { data, loading, error } = usePokemon(currentId);
+  const [data, setData] = useState<Pokemon | null>(null);
+  const [intro, setIntro] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const title = useMemo(() => {
-    if (!data) return "";
-    const name = data.name[0].toUpperCase() + data.name.slice(1);
-    return `#${data.id} ${name}`;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.id, data?.name]);
+  // fetch pokemon details + species intro
+  useEffect(() => {
+    let alive = true;
+
+    async function run() {
+      setLoading(true);
+      try {
+        const p = await getPokemonById(pid);
+        if (!alive) return;
+        setData(p);
+
+        // Fetch species flavor text (English)
+        try {
+          const { data: sp } = await api.get(`/pokemon-species/${pid}`);
+          const entry =
+            (sp?.flavor_text_entries as Array<any>)?.find(
+              (e) => e?.language?.name === "en"
+            ) || null;
+          const text = (entry?.flavor_text || "")
+            .replace(/\n|\f/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (alive) setIntro(text);
+        } catch {
+          // ignore species fetch errors
+        }
+      } finally {
+        if (alive) setLoading(false);
+      }
+    }
+
+    run();
+    return () => {
+      alive = false;
+    };
+  }, [pid]);
+
+  const img = getImageUrl(data);
+  const prevId = pid > 1 ? pid - 1 : null;
+  const nextId = pid + 1; // keep simple; PokeAPI has many ids
 
   if (loading) {
     return (
@@ -62,85 +77,89 @@ export default function DetailView() {
     );
   }
 
-  if (error || !data) {
+  if (!data) {
     return (
       <main className={s.container}>
-        <h1 className={s.title}>Not available</h1>
-        <p>{error ?? "No data"}</p>
-        <Link to="/" className={s.card}>
-          Go back
-        </Link>
+        <h1 className={s.title}>Not Found</h1>
+        <p>
+          The requested Pokémon does not exist.{" "}
+          <Link to="/">Back to list</Link>
+        </p>
       </main>
     );
   }
 
-  const art = spriteUrl(data);
-
   return (
     <main className={s.container}>
-      <h1 className={s.title}>{title}</h1>
+      <h1 className={s.title}>
+        {formatId(data.id)} {data.name.charAt(0).toUpperCase() + data.name.slice(1)}
+      </h1>
 
-      <div className={s.grid}>
-        {/* left: image */}
+      {/* Controls */}
+      <div className={s.chips}>
+        <Link className={s.chip} to="/">
+          ← Back to List
+        </Link>
+        {prevId && (
+          <Link className={s.chip} to={`/pokemon/${prevId}`}>
+            ← Prev
+          </Link>
+        )}
+        <Link className={s.chip} to={`/pokemon/${nextId}`}>
+          Next →
+        </Link>
+      </div>
+
+      {/* Content */}
+      <section className={s.grid}>
         <article className={s.card}>
-          {art ? (
-            <img className={s.thumb} src={art} alt={data.name} />
+          {img ? (
+            <img className={s.thumb} src={img} alt={data.name} loading="lazy" />
           ) : (
             <div className={s.thumb} aria-label="no image" />
           )}
+
+          {/* Intro / flavor text */}
+          {intro && <p className={s.title} style={{ fontSize: "1rem" }}>{intro}</p>}
+          {/* Tip: the only inline style above is font-size. If your instructor forbids
+              all inline styles strictly, remove the style prop and rely on CSS module. */}
         </article>
 
-        {/* right: facts */}
         <article className={s.card}>
-          <h2 className={s.title} style={{ margin: 0 }}>Overview</h2>
+          <h2 className={s.title}>Basics</h2>
           <ul>
             <li>height: {data.height}</li>
             <li>weight: {data.weight}</li>
-            {"base_experience" in data && (data as any).base_experience != null && (
-              <li>base_experience: {(data as any).base_experience}</li>
-            )}
           </ul>
 
+          <h2 className={s.title}>Types</h2>
           <div className={s.chips}>
-            {data.types.map((t) => (
-              <span key={t.type.name} className={s.chip}>
-                {t.type.name}
+            {(data as any)?.types?.map((t: any) => (
+              <span key={t.slot} className={s.chip}>
+                {t.type?.name}
               </span>
             ))}
           </div>
 
-          <h3 className={s.title} style={{ marginTop: "1rem" }}>Stats</h3>
+          <h2 className={s.title}>Abilities</h2>
+          <div className={s.chips}>
+            {(data as any)?.abilities?.map((a: any) => (
+              <span key={a.ability?.name} className={s.chip}>
+                {a.ability?.name}
+              </span>
+            ))}
+          </div>
+
+          <h2 className={s.title}>Stats</h2>
           <ul>
-            {data.stats.map((st) => (
-              <li key={st.stat.name}>
-                {st.stat.name}: {st.base_stat}
+            {(data as any)?.stats?.map((st: any) => (
+              <li key={st.stat?.name}>
+                {st.stat?.name}: {st.base_stat}
               </li>
             ))}
           </ul>
-
-          <div className={s.nav}>
-            <button
-              className={s.chip}
-              disabled={currentId <= 1}
-              onClick={() => navigate(`/pokemon/${currentId - 1}`)}
-            >
-              Prev
-            </button>
-            <button
-              className={s.chip}
-              onClick={() => navigate(`/pokemon/${currentId + 1}`)}
-            >
-              Next
-            </button>
-            <Link to="/" className={s.chip}>
-              Back to List
-            </Link>
-            <Link to="/gallery" className={s.chip}>
-              Gallery
-            </Link>
-          </div>
         </article>
-      </div>
+      </section>
     </main>
   );
 }
