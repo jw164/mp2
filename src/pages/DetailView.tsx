@@ -1,61 +1,97 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getPokemonById } from "../api/pokeApi";
 import type { Pokemon } from "../types";
 import s from "../styles/layout.module.css";
 
-function art(p: Pokemon | null) {
-  return p?.sprites.other?.["official-artwork"]?.front_default || p?.sprites.front_default || "";
-}
-
 const MIN_ID = 1;
-const MAX_ID = 120; // 和 ListView 拉取数量一致以便演示
+const MAX_ID = 120;
+
+function art(p?: Pokemon) {
+  return (
+    p?.sprites.other?.["official-artwork"]?.front_default ??
+    p?.sprites.front_default ??
+    ""
+  );
+}
 
 export default function DetailView() {
   const { id } = useParams();
-  const pid = Number(id);
-  const nav = useNavigate();
-  const [poke, setPoke] = useState<Pokemon | null>(null);
+  const current = Number(id);
+  const [data, setData] = useState<Pokemon | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
-        setPoke(await getPokemonById(pid));
-      } catch { setErr("Failed to load details."); }
-      finally { setLoading(false); }
+        setErr(null);
+        const d = await getPokemonById(current);
+        setData(d);
+      } catch {
+        setErr("Failed to load details.");
+      } finally {
+        setLoading(false);
+      }
     })();
-  }, [pid]);
+  }, [current]);
 
-  const prev = useMemo(() => (pid > MIN_ID ? pid - 1 : null), [pid]);
-  const next = useMemo(() => (pid < MAX_ID ? pid + 1 : null), [pid]);
+  const prevId = current <= MIN_ID ? MAX_ID : current - 1;
+  const nextId = current >= MAX_ID ? MIN_ID : current + 1;
 
   return (
-    <main className={s.container}>
-      <div className={s.nav}>
-        <button onClick={() => prev && nav(`/pokemon/${prev}`)} disabled={!prev}>◀ Prev</button>
-        <Link to="/">Back to List</Link>
-        <Link to="/gallery">Gallery</Link>
-        <button onClick={() => next && nav(`/pokemon/${next}`)} disabled={!next}>Next ▶</button>
+    <main className="page">
+      <div className={s.navRow}>
+        <Link className={s.btn} to="/">← Back to List</Link>
+        <div style={{ flex: 1 }} />
+        <button className={s.btn} onClick={() => navigate(`/pokemon/${prevId}`)}>← Prev</button>
+        <button className={s.btn} onClick={() => navigate(`/pokemon/${nextId}`)}>Next →</button>
       </div>
 
-      {loading && <p>Loading…</p>}
       {err && <p role="alert">{err}</p>}
+      {loading || !data ? (
+        <p>Loading…</p>
+      ) : (
+        <section className={s.detail}>
+          <img className={s.hero} src={art(data)} alt={data.name} />
+          <div className={s.meta}>
+            <h1 className={s.capitalize}>
+              #{data.id} {data.name}
+            </h1>
 
-      {poke && (
-        <>
-          <h1 style={{ textTransform: "capitalize" }}>{poke.name}</h1>
-          {art(poke) && <img src={art(poke)!} alt={poke.name} style={{ width: 260, height: 260, objectFit: "contain" }} />}
-          <ul>
-            <li>ID: {poke.id}</li>
-            <li>Base XP: {poke.base_experience}</li>
-            <li>Height: {poke.height}</li>
-            <li>Weight: {poke.weight}</li>
-          </ul>
-        </>
+            <div className={s.kv}>
+              <div>Base EXP</div><div>{data.base_experience}</div>
+              <div>Height</div><div>{data.height}</div>
+              <div>Weight</div><div>{data.weight}</div>
+            </div>
+
+            <div>
+              <div style={{ marginBottom: 6 }}>Types</div>
+              <div className={s.pills}>
+                {data.types?.map((t) => (
+                  <span key={t.type.name} className={s.pill}>{t.type.name}</span>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ margin: "10px 0 6px" }}>Stats</div>
+              <div className={s.kv}>
+                {data.stats?.map((st) => (
+                  <Fragment key={st.stat.name}>
+                    <div className={s.capitalize}>{st.stat.name}</div>
+                    <div>{st.base_stat}</div>
+                  </Fragment>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
       )}
     </main>
   );
 }
+
+import { Fragment } from "react";
