@@ -52,43 +52,24 @@ export default function ListView() {
     <main className="page">
       <h1>Pokémon List</h1>
 
-      <section className={s.panel} aria-labelledby="search-title">
+      <section className={s.panel}>
         <div className={s.field}>
           <input
+            className={s.inputFull}
             type="search"
             placeholder="Search Pokémon by name…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            style={{
-              width: "100%",
-              padding: ".6rem .75rem",
-              borderRadius: 8,
-              border: "1px solid #cfd8dc",
-            }}
             aria-label="search"
           />
         </div>
 
         <div className={s.field}>
-          <label
-            style={{
-              display: "block",
-              color: "#556",
-              fontSize: 14,
-              marginBottom: 4,
-            }}
-          >
-            Sort by:
-          </label>
+          <label style={{ display: "block" }}>Sort by:</label>
           <select
+            className={s.selectFull}
             value={key}
             onChange={(e) => setKey(e.target.value as SortKey)}
-            style={{
-              width: "100%",
-              padding: ".5rem .6rem",
-              borderRadius: 8,
-              border: "1px solid #cfd8dc",
-            }}
             aria-label="sort key"
           >
             <option value="name">Name</option>
@@ -129,18 +110,9 @@ export default function ListView() {
             const id = idFromUrl(p.url);
             return (
               <li key={p.name} className={s.item}>
-                <img
-                  className={s.thumbSmall}
-                  src={artUrl(id)}
-                  alt={p.name}
-                  loading="lazy"
-                />
+                <img className={s.thumbSmall} src={artUrl(id)} alt={p.name} loading="lazy" />
                 <div>
-                  <Link
-                    to={`/pokemon/${id}`}
-                    className={s.nameLink}
-                    style={{ textTransform: "capitalize" }}
-                  >
+                  <Link to={`/pokemon/${id}`} className={`${s.nameLink} ${s.capitalize}`}>
                     {p.name}
                   </Link>
                   <div className={s.rank}>#{id}</div>
