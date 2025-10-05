@@ -5,7 +5,6 @@ export const api = axios.create({
   baseURL: "https://pokeapi.co/api/v2",
 });
 
-// Simple localStorage cache to soften rate limits
 const TTL = 1000 * 60 * 30;
 function getCache<T>(key: string): T | null {
   try {
@@ -47,24 +46,16 @@ export async function getPokemonById(id: number): Promise<Pokemon> {
   return data;
 }
 
-export async function getManyPokemonDetails(
-  ids: number[]
-): Promise<Pokemon[]> {
+export async function getManyPokemonDetails(ids: number[]): Promise<Pokemon[]> {
   const results: Pokemon[] = [];
-  // try cache first
   for (const id of ids) {
     const c = getCache<Pokemon>(`poke:${id}`);
     if (c) results.push(c);
   }
-  const missing = ids.filter(
-    (id) => !results.find((p) => p.id === id)
-  );
+  const missing = ids.filter((id) => !results.find((p) => p.id === id));
   if (missing.length) {
-    const fetched = await Promise.all(
-      missing.map((id) => getPokemonById(id))
-    );
+    const fetched = await Promise.all(missing.map((id) => getPokemonById(id)));
     results.push(...fetched);
   }
-  // keep order by id
   return results.sort((a, b) => a.id - b.id);
 }
