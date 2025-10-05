@@ -1,50 +1,94 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useState, useMemo } from "react";
-import { usePokemonData } from "../hooks/usePokemonData";
+import { getManyPokemonDetails } from "../api/pokeApi";
 import type { Pokemon } from "../types";
 import s from "../styles/layout.module.css";
 
-const ALL_TYPES = ["normal","fire","water","electric","grass","ice","fighting","poison","ground","flying","psychic","bug","rock","ghost","dragon","dark","steel","fairy"] as const;
-type TypeName = typeof ALL_TYPES[number];
+const RANGE_START = 1;
+const RANGE_END = 120;
 
-function sprite(p: Pokemon) {
+function art(p: Pokemon) {
   return (
-    p.sprites.other?.["official-artwork"]?.front_default ||
-    p.sprites.front_default ||
+    p.sprites.other?.["official-artwork"]?.front_default ??
+    p.sprites.front_default ??
     ""
   );
 }
 
 export default function GalleryView() {
-  const { list, loading, err } = usePokemonData(60);
-  const [types, setTypes] = useState<TypeName[]>([]);
+  const [all, setAll] = useState<Pokemon[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
 
-  function toggle(t: TypeName) {
-    setTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
-  }
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        const ids = Array.from({ length: RANGE_END - RANGE_START + 1 }, (_, i) => RANGE_START + i);
+        const data = await getManyPokemonDetails(ids);
+        setAll(data);
+      } catch {
+        setErr("Failed to load gallery.");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const typeOptions = useMemo(() => {
+    const set = new Set<string>();
+    all.forEach((p) => p.types?.forEach((t) => set.add(t.type.name)));
+    return Array.from(set).sort();
+  }, [all]);
 
   const filtered = useMemo(() => {
-    if (!types.length) return list;
-    return list.filter(p => types.every(t => p.types?.some(pt => pt.type.name === t)));
-  }, [list, types]);
+    if (!selected.length) return all;
+    return all.filter((p) =>
+      selected.every((t) => p.types?.some((x) => x.type.name === t))
+    );
+  }, [all, selected]);
+
+  function toggleType(t: string) {
+    setSelected((prev) =>
+      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]
+    );
+  }
 
   return (
-    <main className={s.container}>
+    <main className="page">
       <h1>Gallery</h1>
-      <div className={s.chips}>
-        {ALL_TYPES.map(t => (
-          <button key={t} className={`${s.chip} ${types.includes(t) ? s.active : ""}`} onClick={() => toggle(t)} aria-pressed={types.includes(t)}>
+
+      <div className={s.chips} role="group" aria-label="type filters">
+        {typeOptions.map((t) => (
+          <button
+            key={t}
+            className={`${s.chip} ${selected.includes(t) ? s.active : ""}`}
+            onClick={() => toggleType(t)}
+          >
             {t}
           </button>
         ))}
       </div>
+
+      {selected.length > 0 && (
+        <p style={{ marginTop: ".5rem" }}>
+          {filtered.length} results ·{" "}
+          <button className={s.chip} onClick={() => setSelected([])}>
+            Clear filters
+          </button>
+        </p>
+      )}
+
       {err && <p role="alert">{err}</p>}
-      {loading ? <p>Loading…</p> : (
+      {loading ? (
+        <p>Loading…</p>
+      ) : (
         <div className={s.grid}>
-          {filtered.map(p => (
-            <Link key={p.id} to={`/pokemon/${p.id}`} className={s.card}>
-              {sprite(p) && <img className={s.thumb} src={sprite(p)!} alt={p.name} />}
-              <div className={s.title}>#{p.id} {p.name}</div>
+          {filtered.map((p) => (
+            <Link key={p.id} className={s.card} to={`/pokemon/${p.id}`}>
+              <img className={s.thumb} src={art(p)} alt={p.name} loading="lazy" />
+              <div className={s.title}>{p.name}</div>
             </Link>
           ))}
         </div>
@@ -52,3 +96,4 @@ export default function GalleryView() {
     </main>
   );
 }
+
