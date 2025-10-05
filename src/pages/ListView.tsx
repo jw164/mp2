@@ -11,7 +11,6 @@ function idFromUrl(url: string) {
   const parts = url.split("/").filter(Boolean);
   return Number(parts[parts.length - 1]);
 }
-
 function artUrl(id: number) {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
 }
@@ -65,7 +64,7 @@ export default function ListView() {
         </div>
 
         <div className={s.field}>
-          <label style={{ display: "block" }}>Sort by:</label>
+          <label className={s.labelBlock}>Sort by:</label>
           <select
             className={s.selectFull}
             value={key}
@@ -125,5 +124,6 @@ export default function ListView() {
     </main>
   );
 }
+
 
 
