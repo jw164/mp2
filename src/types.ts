@@ -1,22 +1,28 @@
-export type PokemonListItem = {
-  name: string;
-  url: string;
-};
-
-export type Pokemon = {
+export interface Pokemon {
   id: number;
   name: string;
-  height: number;
-  weight: number;
-  base_experience?: number | null;
   sprites: {
-    front_default?: string | null;
+    front_default?: string;
     other?: {
       ["official-artwork"]?: {
         front_default?: string | null;
       };
+      dream_world?: {
+        front_default?: string | null;
+      };
     };
   };
-  types: { slot: number; type: { name: string } }[];
-  stats: { base_stat: number; stat: { name: string } }[];
-};
+  types: {
+    slot: number;
+    type: {
+      name: string;
+      url: string;
+    };
+  }[];
+  stats: {
+    base_stat: number;
+    stat: {
+      name: string;
+    };
+  }[];
+}
