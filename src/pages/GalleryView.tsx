@@ -72,7 +72,7 @@ export default function GalleryView() {
       </div>
 
       {selected.length > 0 && (
-        <p style={{ marginTop: ".5rem" }}>
+        <p className={s.metaNote}>
           {filtered.length} results ·{" "}
           <button className={s.chip} onClick={() => setSelected([])}>
             Clear filters
