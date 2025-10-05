@@ -29,10 +29,11 @@
 
 /* Gallery */
 .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
-.card { border: 1px solid #eee; border-radius: 12px; background: #fff; padding: .75rem; text-decoration: none; color: inherit; }
+.card { border: 1px solid #eee; border-radius: 12px; background: #fff; padding: .75rem; text-decoration: none; color: inherit; transition: transform .15s ease, box-shadow .15s ease; }
+.card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
 .thumb { width: 100%; aspect-ratio: 1 / 1; object-fit: contain; }
 .title { margin: .5rem 0 0; font-weight: 600; text-transform: capitalize; }
-.chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .5rem; }
 .chip { padding: .28rem .6rem; border: 1px solid #ddd; border-radius: 999px; background: #fff; cursor: pointer; text-transform: capitalize; }
 .active { border: 2px solid #111; background: #f6f6f6; }
 
