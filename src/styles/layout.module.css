@@ -165,3 +165,28 @@ a:focus-visible, button:focus-visible { outline: none; box-shadow: 0 0 0 var(--r
 /* ============ Subtle Transitions for Inputs ============ */
 .inputFull, .selectFull, .btn { transition: background .15s ease, border-color .15s ease, box-shadow .15s ease; }
 
+/* ---- Skeleton (no inline styles) ---- */
+.skeletonCard { pointer-events: none; }
+.skeletonBox {
+  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--surface) 37%, var(--surface-muted) 63%);
+  background-size: 400% 100%;
+  animation: skPulse 1.1s ease-in-out infinite;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.skeletonLine {
+  height: 14px;
+  width: 60%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--surface) 37%, var(--surface-muted) 63%);
+  background-size: 400% 100%;
+  animation: skPulse 1.1s ease-in-out infinite;
+  margin-top: 8px;
+}
+
+@keyframes skPulse {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+
