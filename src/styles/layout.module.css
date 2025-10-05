@@ -188,5 +188,29 @@ a:focus-visible, button:focus-visible { outline: none; box-shadow: 0 0 0 var(--r
   0% { background-position: 100% 0; }
   100% { background-position: 0 0; }
 }
+/* 骨架卡片，与真实卡片尺寸一致 */
+.skeletonCard {
+  pointer-events: none;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: var(--surface, #f8f8f8);
+}
+
+/* 图片未加载时的背景 */
+.thumb {
+  background: var(--surface, #f4f4f4);
+  border-radius: 8px;
+  width: 100%;
+  height: auto;
+}
+
+/* 小屏适配 */
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+  }
+}
 
 
