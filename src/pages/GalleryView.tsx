@@ -1,131 +1,75 @@
 // src/pages/GalleryView.tsx
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import s from "../styles/layout.module.css";
-import { api } from "../pokeApi"; // ⬅⬅ 关键：确认这个路径能指向 src/pokeApi.ts
+import styles from "../styles/layout.module.css";
+import type { Pokemon } from "../types";
+import { getManyPokemonDetails } from "../api/pokeApi";
 
-type PokemonListItem = {
-  name: string;
-  url: string; // e.g. https://pokeapi.co/api/v2/pokemon/1/
-};
-type PokeListResponse = {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: PokemonListItem[];
-};
+const FIRST_COUNT = 60; // 画廊展示数量
 
-function extractIdFromUrl(url: string): number {
-  const parts = url.split("/").filter(Boolean);
-  return Number(parts[parts.length - 1]);
-}
-function spriteUrl(id: number) {
-  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
-}
-
-export default function GalleryView() {
+const GalleryView: React.FC = () => {
+  const [items, setItems] = useState<Pokemon[]>([]);
   const [loading, setLoading] = useState(true);
-  const [raw, setRaw] = useState<PokemonListItem[]>([]);
   const [err, setErr] = useState<string | null>(null);
 
-  const [q, setQ] = useState("");
-  const [sortKey, setSortKey] = useState<"id" | "name">("id");
-  const [asc, setAsc] = useState(true);
-
   useEffect(() => {
-    let ok = true;
-    (async () => {
+    const run = async () => {
       try {
         setLoading(true);
-        const { data } = await api.get<PokeListResponse>("/pokemon?limit=200");
-        if (!ok) return;
-        setRaw(data.results);
         setErr(null);
-      } catch (e: any) {
-        if (!ok) return;
-        setErr(e?.message ?? "Fetch failed");
+
+        // 获取前 60 个宝可梦详情（1..60）
+        const ids = Array.from({ length: FIRST_COUNT }, (_, i) => i + 1);
+        const list = await getManyPokemonDetails(ids);
+        setItems(list);
+      } catch (e) {
+        console.error(e);
+        setErr("Failed to load Pokémon gallery.");
       } finally {
-        if (ok) setLoading(false);
+        setLoading(false);
       }
-    })();
-    return () => {
-      ok = false;
     };
+    run();
   }, []);
 
-  const filtered = useMemo(() => {
-    const keyword = q.trim().toLowerCase();
-    let items = raw.map((p) => ({
-      ...p,
-      id: extractIdFromUrl(p.url),
-    }));
-    if (keyword) {
-      items = items.filter((p) => p.name.toLowerCase().includes(keyword));
-    }
-    items.sort((a, b) => {
-      let cmp = 0;
-      if (sortKey === "id") cmp = a.id - b.id;
-      else cmp = a.name.localeCompare(b.name);
-      return asc ? cmp : -cmp;
-    });
-    return items;
-  }, [raw, q, sortKey, asc]);
-
-  if (loading) return <main className={s.container}>Loading…</main>;
-  if (err) return <main className={s.container}>Error: {err}</main>;
+  if (loading) return <div className={styles.container}>Loading…</div>;
+  if (err) return <div className={styles.container}>{err}</div>;
 
   return (
-    <main className={s.container}>
-      <h1>Pokémon Gallery</h1>
+    <main className={styles.container}>
+      <h1 className={styles.title}>Pokémon Gallery</h1>
 
-      <div className={s.controls}>
-        <input
-          className={s.input}
-          placeholder="Search Pokémon by name…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
-        <select
-          className={s.select}
-          value={sortKey}
-          onChange={(e) => setSortKey(e.target.value as "id" | "name")}
-        >
-          <option value="id">Sort by: ID</option>
-          <option value="name">Sort by: Name</option>
-        </select>
-        <select
-          className={s.select}
-          value={asc ? "asc" : "desc"}
-          onChange={(e) => setAsc(e.target.value === "asc")}
-        >
-          <option value="asc">Ascending ↑</option>
-          <option value="desc">Descending ↓</option>
-        </select>
-      </div>
+      <div className={styles.grid}>
+        {items.map((p) => {
+          // 尽量优先使用高清图，其次退回到 front_default
+          const anySprites = p.sprites as any;
+          const imgSrc =
+            anySprites?.other?.["official-artwork"]?.front_default ||
+            p.sprites?.front_default ||
+            anySprites?.other?.dream_world?.front_default ||
+            "";
 
-      <section className={s.grid} aria-label="Pokémon Gallery">
-        {filtered.map((p) => (
+        return (
           <Link
-            key={p.id}
             to={`/pokemon/${p.id}`}
-            className={s.card}
-            aria-label={`${p.name} (#${p.id})`}
+            key={p.id}
+            className={styles.card}
+            aria-label={`View ${p.name}`}
           >
-            <img
-              className={s.thumb}
-              src={spriteUrl(p.id)}
-              alt={p.name}
-              loading="lazy"
-              width={256}
-              height={256}
-            />
-            <div className={s.title}>
-              #{p.id} {p.name}
+            {imgSrc ? (
+              <img className={styles.thumb} src={imgSrc} alt={p.name} />
+            ) : (
+              <div className={styles.thumb} />
+            )}
+            <div className={styles.title}>
+              #{p.id} {p.name.charAt(0).toUpperCase() + p.name.slice(1)}
             </div>
           </Link>
-        ))}
-      </section>
+        );
+        })}
+      </div>
     </main>
   );
-}
+};
 
+export default GalleryView;
