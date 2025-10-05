@@ -1,91 +1,130 @@
-import { useEffect, useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+// src/pages/GalleryView.tsx
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import s from "../styles/layout.module.css";
-import { usePokemonList, art } from "../pokeApi";
+import { api } from "../pokeApi"; // ⬅⬅ 关键：确认这个路径能指向 src/pokeApi.ts
+
+type PokemonListItem = {
+  name: string;
+  url: string; // e.g. https://pokeapi.co/api/v2/pokemon/1/
+};
+type PokeListResponse = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: PokemonListItem[];
+};
+
+function extractIdFromUrl(url: string): number {
+  const parts = url.split("/").filter(Boolean);
+  return Number(parts[parts.length - 1]);
+}
+function spriteUrl(id: number) {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+}
 
 export default function GalleryView() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [selected, setSelected] = useState<string[]>(
-    searchParams.get("types") ? searchParams.get("types")!.split(",") : []
-  );
+  const [loading, setLoading] = useState(true);
+  const [raw, setRaw] = useState<PokemonListItem[]>([]);
+  const [err, setErr] = useState<string | null>(null);
 
-  const { data, isLoading, error } = usePokemonList();
+  const [q, setQ] = useState("");
+  const [sortKey, setSortKey] = useState<"id" | "name">("id");
+  const [asc, setAsc] = useState(true);
 
-  // ✅ 当 selected 变化时更新 URL（避免出现空参数 ?types=）
   useEffect(() => {
-    if (selected.length > 0) {
-      setSearchParams({ types: selected.join(",") }, { replace: true });
-    } else {
-      setSearchParams({}, { replace: true });
+    let ok = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const { data } = await api.get<PokeListResponse>("/pokemon?limit=200");
+        if (!ok) return;
+        setRaw(data.results);
+        setErr(null);
+      } catch (e: any) {
+        if (!ok) return;
+        setErr(e?.message ?? "Fetch failed");
+      } finally {
+        if (ok) setLoading(false);
+      }
+    })();
+    return () => {
+      ok = false;
+    };
+  }, []);
+
+  const filtered = useMemo(() => {
+    const keyword = q.trim().toLowerCase();
+    let items = raw.map((p) => ({
+      ...p,
+      id: extractIdFromUrl(p.url),
+    }));
+    if (keyword) {
+      items = items.filter((p) => p.name.toLowerCase().includes(keyword));
     }
-  }, [selected, setSearchParams]);
+    items.sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "id") cmp = a.id - b.id;
+      else cmp = a.name.localeCompare(b.name);
+      return asc ? cmp : -cmp;
+    });
+    return items;
+  }, [raw, q, sortKey, asc]);
 
-  // ✅ 根据筛选类型过滤数据
-  const filtered = selected.length
-    ? data?.filter((p) => p.types.some((t) => selected.includes(t))) ?? []
-    : data ?? [];
-
-  // ✅ 处理选中/取消选中逻辑
-  const toggleType = (type: string) => {
-    setSelected((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
-  };
-
-  const allTypes = Array.from(
-    new Set(data?.flatMap((p) => p.types) ?? [])
-  ).sort();
-
-  if (error) return <div className={s.error}>Failed to load Pokémon data.</div>;
+  if (loading) return <main className={s.container}>Loading…</main>;
+  if (err) return <main className={s.container}>Error: {err}</main>;
 
   return (
-    <main className={s.main}>
-      <h1 className={s.title}>Pokémon Gallery</h1>
+    <main className={s.container}>
+      <h1>Pokémon Gallery</h1>
 
-      {/* ✅ 筛选标签 */}
-      <div className={s.filterBar}>
-        {allTypes.map((t) => (
-          <button
-            key={t}
-            className={`${s.chip} ${selected.includes(t) ? s.active : ""}`}
-            onClick={() => toggleType(t)}
-          >
-            {t}
-          </button>
-        ))}
-        {selected.length > 0 && (
-          <button className={s.clearBtn} onClick={() => setSelected([])}>
-            Clear
-          </button>
-        )}
+      <div className={s.controls}>
+        <input
+          className={s.input}
+          placeholder="Search Pokémon by name…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <select
+          className={s.select}
+          value={sortKey}
+          onChange={(e) => setSortKey(e.target.value as "id" | "name")}
+        >
+          <option value="id">Sort by: ID</option>
+          <option value="name">Sort by: Name</option>
+        </select>
+        <select
+          className={s.select}
+          value={asc ? "asc" : "desc"}
+          onChange={(e) => setAsc(e.target.value === "asc")}
+        >
+          <option value="asc">Ascending ↑</option>
+          <option value="desc">Descending ↓</option>
+        </select>
       </div>
 
-      {/* ✅ 骨架加载状态 */}
-      {isLoading ? (
-        <div className={s.grid}>
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className={s.skeletonCard}>
-              <div className={s.thumb}></div>
-              <div className={s.textPlaceholder}></div>
+      <section className={s.grid} aria-label="Pokémon Gallery">
+        {filtered.map((p) => (
+          <Link
+            key={p.id}
+            to={`/pokemon/${p.id}`}
+            className={s.card}
+            aria-label={`${p.name} (#${p.id})`}
+          >
+            <img
+              className={s.thumb}
+              src={spriteUrl(p.id)}
+              alt={p.name}
+              loading="lazy"
+              width={256}
+              height={256}
+            />
+            <div className={s.title}>
+              #{p.id} {p.name}
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className={s.grid}>
-          {filtered.map((p) => (
-            <Link to={`/pokemon/${p.id}`} key={p.id} className={s.card}>
-              <img
-                className={s.thumb}
-                src={art(p)}
-                alt={p.name}
-                loading="lazy" // ✅ 懒加载
-              />
-              <h2>{p.name}</h2>
-              <p className={s.types}>{p.types.join(", ")}</p>
-            </Link>
-          ))}
-        </div>
-      )}
+          </Link>
+        ))}
+      </section>
     </main>
   );
 }
