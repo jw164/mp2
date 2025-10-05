@@ -1,5 +1,3 @@
-// src/types.ts
-
 export interface PokemonListItem {
   name: string;
   url: string;
@@ -39,7 +37,7 @@ export interface Pokemon {
   id: number;
   name: string;
 
-  // add these fields so TS knows they exist
+
   height: number;           // decimetres
   weight: number;           // hectograms
   base_experience: number;
