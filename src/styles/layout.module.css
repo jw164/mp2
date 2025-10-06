@@ -113,6 +113,13 @@
   max-width: 520px;
   margin: 0 auto;                    /* 列内再居中 */
 }
+.pageTitle {
+  text-align: center;
+  font-weight: 800;
+  /* 根据屏宽自动缩放：最小 28px，理想 6vw，最大 44px */
+  font-size: clamp(28px, 6vw, 44px);
+  margin: .25rem 0 1rem;
+}
 
 
 
