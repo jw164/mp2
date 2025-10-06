@@ -43,6 +43,7 @@ export default function DetailView() {
     setIntro("");
 
     try {
+      // 进入新详情回到顶部
       window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     } catch {}
 
@@ -52,7 +53,7 @@ export default function DetailView() {
         if (!alive) return;
         setData(p);
 
-        // 物种介绍（英文）
+        // 拉取物种简介（英文）
         try {
           const { data: sp } = await api.get(`/pokemon-species/${pid}`);
           const entry = (sp?.flavor_text_entries as Array<any>)?.find(
@@ -110,8 +111,7 @@ export default function DetailView() {
               width: 300,
               height: 300,
               borderRadius: 16,
-              background:
-                "linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%)",
+              background: "linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%)",
               backgroundSize: "400% 100%",
               animation: "shimmer 1.2s infinite",
             }}
@@ -126,7 +126,7 @@ export default function DetailView() {
   if (error || !data) {
     return (
       <main className={s.container}>
-        <h1 className={s.title}>Not Found</h1>
+        <h1 className={`${s.title} ${s.pageTitle}`}>Not Found</h1>
         <p>
           {error || "This Pokémon does not exist in the current range."}{" "}
           <Link to="/">Back to list</Link>
@@ -137,8 +137,7 @@ export default function DetailView() {
 
   const img = pickImage(data) || artworkUrl(data.id);
   const types = (data as any)?.types?.map((t: any) => t.type?.name) ?? [];
-  const abilities =
-    (data as any)?.abilities?.map((a: any) => a.ability?.name) ?? [];
+  const abilities = (data as any)?.abilities?.map((a: any) => a.ability?.name) ?? [];
   const stats = (data as any)?.stats ?? [];
 
   return (
@@ -191,11 +190,12 @@ export default function DetailView() {
         </div>
       </div>
 
-      <h1 className={s.title} style={{ textTransform: "capitalize" }}>
+      {/* 自适应字号的居中标题 */}
+      <h1 className={`${s.title} ${s.pageTitle}`} style={{ textTransform: "capitalize" }}>
         {padId(data.id)} {data.name}
       </h1>
 
-      {/* 👉 使用专用两列网格并整体居中 */}
+      {/* 两列居中网格（小屏 1 列；大屏 2 列） */}
       <section className={`${s.grid} ${s.detailGrid}`}>
         {/* 左列：大图 + 简介 */}
         <article className={`${s.card} ${s.detailCol}`} style={{ alignItems: "center" }}>
@@ -203,8 +203,8 @@ export default function DetailView() {
             src={img}
             alt={data.name}
             loading="lazy"
-            width={300}
-            height={300}
+            width={320}
+            height={320}
             style={{ objectFit: "contain" }}
           />
           {intro && <p style={{ marginTop: 8, lineHeight: 1.5 }}>{intro}</p>}
@@ -223,13 +223,12 @@ export default function DetailView() {
           </ul>
 
           <h2 className={s.title}>Types</h2>
-          {/* 居中排列徽章 */}
           <div className={s.pillsRow}>
             {types.length
               ? types.map((t: string) => (
                   <Link
                     key={t}
-                    to={`/?type=${encodeURIComponent(t)}`} // 点击回到列表并按类型过滤
+                    to={`/?type=${encodeURIComponent(t)}`}
                     className={s.pill}
                     style={{ textTransform: "capitalize" }}
                     aria-label={`Filter list by type ${t}`}
@@ -241,7 +240,6 @@ export default function DetailView() {
           </div>
 
           <h2 className={s.title}>Abilities</h2>
-          {/* 居中排列徽章 */}
           <div className={s.pillsRow}>
             {abilities.length
               ? abilities.map((a: string) => (
@@ -263,25 +261,12 @@ export default function DetailView() {
               const val = Number(st.base_stat) || 0;
               const w = Math.min(100, val);
               return (
-                <li key={label} style={{ margin: "6px 0" }}>
-                  <div
-                    style={{
-                      fontSize: 12,
-                      textTransform: "capitalize",
-                      marginBottom: 4,
-                    }}
-                  >
+                <li key={label} className={s.statRow}>
+                  <div className={s.statLabel}>
                     {label}: {val}
                   </div>
-                  <div style={{ height: 8, background: "#eee", borderRadius: 999 }}>
-                    <div
-                      style={{
-                        width: `${w}%`,
-                        height: "100%",
-                        background: "#bbb",
-                        borderRadius: 999,
-                      }}
-                    />
+                  <div className={s.statTrack}>
+                    <div className={s.statFill} style={{ width: `${w}%` }} />
                   </div>
                 </li>
               );
@@ -292,6 +277,7 @@ export default function DetailView() {
     </main>
   );
 }
+
 
 
 
