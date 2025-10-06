@@ -1,5 +1,4 @@
-/* src/styles/layout.module.css */
-
+/* 容器与控件 */
 .container {
   padding: 1rem;
   max-width: 1200px;
@@ -17,6 +16,7 @@
 .input { padding: .5rem; min-width: 260px; }
 .select { padding: .5rem; }
 
+/* 栅格与卡片 */
 .grid {
   display: grid;
   gap: 1rem;
@@ -51,9 +51,32 @@
   border: 2px solid #111;
   background: #f6f6f6;
 }
+
+/* 加载骨架动画 */
 @keyframes shimmer {
   0% { background-position: 0% 0; }
   100% { background-position: -135% 0; }
 }
 
+/* 卡片悬停小动效 */
+.card:hover {
+  box-shadow: 0 6px 18px rgba(0,0,0,.06);
+  transform: translateY(-2px);
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+
+/* 圆角徽章按钮（给 types/abilities 使用） */
+.pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  background: #fff;
+  text-decoration: none;   /* 取消下划线 */
+  color: inherit;
+  line-height: 1;
+}
+.pill:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
 
