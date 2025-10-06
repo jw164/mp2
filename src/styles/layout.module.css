@@ -1,10 +1,19 @@
-/* 容器与控件 */
+/* 基础布局 */
 .container {
   padding: 1rem;
   max-width: 1200px;
   margin: 0 auto;
 }
+.appHeader {
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  border-bottom: 1px solid #ddd;
+  background: #fafafa;
+}
 
+/* 顶部控件 */
 .controls {
   display: flex;
   gap: .5rem;
@@ -12,17 +21,15 @@
   flex-wrap: wrap;
   margin: .5rem 0 1rem;
 }
-
 .input { padding: .5rem; min-width: 260px; }
 .select { padding: .5rem; }
 
-/* 通用栅格与卡片 */
+/* grid 卡片 */
 .grid {
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
 }
-
 .card {
   display: flex;
   flex-direction: column;
@@ -35,109 +42,88 @@
   text-decoration: none;
   color: inherit;
 }
-
-.thumb {
-  width: 120px;
-  height: 120px;
+.thumb, .hero {
+  width: 200px;
+  height: 200px;
   object-fit: contain;
 }
-
 .title { margin: .25rem 0 0; text-transform: capitalize; font-weight: 600; }
 .id { font-size: .85rem; color: #666; }
 
-.nav { display: flex; gap: .5rem; align-items: center; margin: .5rem 0 1rem; }
-
-.active {
+/* chips（列表过滤按钮） */
+.chipsRow { margin: 8px 0; }
+.chipsLabel { margin-bottom: 6px; font-weight: 600; }
+.chipBtn {
+  margin: 4px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+}
+.chipBtnActive {
   border: 2px solid #111;
-  background: #f6f6f6;
+  background: #f2f2f2;
 }
 
-/* 让卡片内的名字与编号居中显示（List/Gallery） */
-.card .title { width: 100%; text-align: center; }
-.card .id    { width: 100%; text-align: center; }
-
-/* 加载骨架动画 */
+/* shimmer 骨架 */
 @keyframes shimmer {
   0% { background-position: 0% 0; }
-  100% { background-position: -135% 0; }
+  100% { background-position: -400% 0; }
 }
-
-/* 卡片悬停小动效 */
-.card:hover {
-  box-shadow: 0 6px 18px rgba(0,0,0,.06);
-  transform: translateY(-2px);
-  transition: box-shadow .2s ease, transform .2s ease;
+.skelBox {
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  background: linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.2s infinite;
 }
+.skelLine { height: 14px; width: 120px; margin-top: 10px; background: #eee; border-radius: 6px; }
+.skelLineSm { height: 12px; width: 60px; margin-top: 6px; background: #f0f0f0; border-radius: 6px; }
 
-/* 圆角徽章按钮（给 types/abilities 使用） */
-.pill {
-  display: inline-block;
-  padding: 4px 10px;
-  border: 1px solid #ddd;
+.empty { margin: 12px 0; opacity: .8; }
+
+/* type 过滤提示 */
+.typeInfo { margin: 10px 0; font-size: 14px; }
+.clearBtn {
+  margin-left: 8px;
+  padding: 2px 8px;
   border-radius: 999px;
+  border: 1px solid #ccc;
   background: #fff;
-  text-decoration: none;   /* 取消下划线 */
+  cursor: pointer;
+}
+
+/* 详情页 */
+.detailHeading { margin-bottom: .5rem; }
+.detailControls { display: flex; gap: .5rem; flex-wrap: wrap; margin: .5rem 0 1rem; }
+.chips { display: flex; gap: .5rem; flex-wrap: wrap; }
+.center { justify-content: center; }
+.chip {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: #fff;
+  text-decoration: none;
   color: inherit;
-  line-height: 1;
 }
-.pill:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.intro { font-size: 1rem; }
+.tip { font-size: 12px; color: #666; margin-top: 6px; }
+.mt8 { margin-top: 8px; }
 
-/* 居中排列的徽章行 */
-.pillsRow {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center; /* 居中 */
-}
-
-/* 详情页专用：两列、整体置中、卡片不拉得太宽 */
 .detailGrid {
-  grid-template-columns: 1fr;        /* 小屏 1 列 */
-  justify-content: center;           /* 整体居中网格 */
-  justify-items: stretch;            /* 列内卡片铺满列宽 */
-  column-gap: 1.25rem;
-  row-gap: 1rem;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 1rem;
+  align-items: start;
 }
+.stats { list-style: none; padding-left: 0; }
+.stats li { display: grid; grid-template-columns: 140px 1fr; align-items: center; margin: 6px 0; }
 
-@media (min-width: 900px) {
-  .detailGrid {
-    grid-template-columns: 1fr 1fr;  /* ≥900px 两列 */
-    max-width: 1100px;               /* 防止过宽 */
-    margin-inline: auto;             /* 网格本身居中 */
-  }
-}
-
-/* 详情页每列卡片的最大宽度，避免过窄或过宽 */
-.detailCol {
-  width: 100%;
-  max-width: 520px;
-  margin: 0 auto;                    /* 列内再居中 */
-}
-.pageTitle {
-  text-align: center;
-  font-weight: 800;
-  /* 根据屏宽自动缩放：最小 28px，理想 6vw，最大 44px */
-  font-size: clamp(28px, 6vw, 44px);
-  margin: .25rem 0 1rem;
-}
-
-
-.statRow { margin: 6px 0; }
-.statLabel {
-  font-size: 12px;
-  text-transform: capitalize;
-  margin-bottom: 4px;
-}
-.statTrack {
-  height: 10px;
-  background: #eee;
-  border-radius: 999px;
-  overflow: hidden;
-}
-.statFill {
-  height: 100%;
-  background: linear-gradient(90deg, #bbb, #999);
-  border-radius: 999px;
-  transition: width .25s ease;
+@media (max-width: 860px) {
+  .detailGrid { grid-template-columns: 1fr; }
+  .hero { width: 100%; height: auto; max-height: 320px; }
 }
 
