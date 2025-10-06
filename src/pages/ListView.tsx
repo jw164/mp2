@@ -8,11 +8,9 @@ type SortKey = "name" | "id";
 type Order = "asc" | "desc";
 type NameBand = "all" | "A-F" | "G-L" | "M-R" | "S-Z";
 
-/** 下拉里提供的固定区间 */
 const ID_BANDS_CONST = ["all", "1-50", "51-100", "101-151"] as const;
 type FixedIdBand = (typeof ID_BANDS_CONST)[number];
 
-/** URL 支持的区间形式（如 10-120），以及固定选项 */
 type IdRangeLiteral = `${number}-${number}`;
 type IdBand = FixedIdBand | IdRangeLiteral;
 
@@ -35,11 +33,10 @@ function inNameBand(name: string, band: NameBand) {
   if (band === "M-R") return within("M", "R");
   return within("S", "Z");
 }
-/** 支持 "all" 或 "lo-hi" */
 function inIdBand(id: number, band: IdBand) {
   if (!band || band === "all") return true;
   const m = String(band).match(/^(\d+)\s*-\s*(\d+)$/);
-  if (!m) return true; // 未识别则不拦
+  if (!m) return true; 
   const lo = Number(m[1]);
   const hi = Number(m[2]);
   const low = Math.min(lo, hi);
@@ -89,10 +86,8 @@ export default function ListView() {
   const [order, setOrder] = useState<Order>((sp.get("order") as Order) ?? "asc");
   const [nameBand, setNameBand] = useState<NameBand>((sp.get("nameBand") as NameBand) ?? "all");
 
-  // 允许 URL 带任意范围（如 10-120）；下拉仍然显示固定三档
   const [idBand, setIdBand] = useState<IdBand>((sp.get("idBand") as IdBand) ?? "all");
 
-  // 从详情页带回的 type=xxx（点击 Type chip）
   const [type, setType] = useState<string>(sp.get("type") ?? "");
   const [typeIds, setTypeIds] = useState<Set<number> | null>(null);
 
@@ -126,8 +121,6 @@ export default function ListView() {
       cancelled = true;
     };
   }, []);
-
-  // 根据 type 拉取该类型的 id 集合（本地有 TTL 缓存）
   useEffect(() => {
     let cancelled = false;
     if (!type) {
@@ -223,8 +216,6 @@ export default function ListView() {
           </Chip>
         ))}
       </div>
-
-      {/* ID 过滤（下拉显示固定三档；URL 仍可用 ?idBand=10-120） */}
       <div className={s.chipsRow} role="group" aria-label="Filter by ID">
         <div className={s.chipsLabel}>Filter by ID</div>
         {ID_BANDS.map((b) => (
@@ -240,7 +231,7 @@ export default function ListView() {
           </Chip>
         ))}
         <div className={s.tip}>
-          Tip: URL 也支持自定义范围，如 <code>?idBand=10-120</code>
+          Tip: The URL also supports a custom range, e.g., <code>?idBand=10-120</code>
         </div>
       </div>
 
