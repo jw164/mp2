@@ -59,3 +59,26 @@ export async function getManyPokemonDetails(ids: number[]): Promise<Pokemon[]> {
   }
   return results.sort((a, b) => a.id - b.id);
 }
+// ---- utils: 从 URL 抽取 id（例如 https://pokeapi.co/api/v2/pokemon/65/ -> 65）
+function _idFromUrl(url: string | undefined | null): number | null {
+  if (!url) return null;
+  const m = url.match(/\/pokemon\/(\d+)\//i);
+  return m ? Number(m[1]) : null;
+}
+
+/** 根据 type 名称拿到该类型下的所有宝可梦 id（含缓存，单请求，超快） */
+export async function getPokemonIdsByType(typeName: string): Promise<number[]> {
+  const key = `type:${typeName.toLowerCase()}`;
+  const cached = getCache<number[]>(key);
+  if (cached) return cached;
+
+  const { data } = await api.get(`/type/${typeName.toLowerCase()}`);
+  const ids =
+    (data?.pokemon as Array<{ pokemon: { url: string } }> | undefined)?.map((x) =>
+      _idFromUrl(x?.pokemon?.url)
+    ) || [];
+
+  const ok = ids.filter((n): n is number => Number.isFinite(n));
+  setCache(key, ok);
+  return ok;
+}
