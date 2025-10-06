@@ -1,3 +1,4 @@
+// src/pages/DetailView.tsx
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import s from "../styles/layout.module.css";
@@ -51,7 +52,7 @@ export default function DetailView() {
         if (!alive) return;
         setData(p);
 
-        // 物种介绍（英文）
+        // 物种介绍（英文优先）
         try {
           const { data: sp } = await api.get(`/pokemon-species/${pid}`);
           const entry = (sp?.flavor_text_entries as Array<any>)?.find(
@@ -142,7 +143,7 @@ export default function DetailView() {
 
   return (
     <main className={s.container}>
-      {/* 顶部导航 + 返回 */}
+      {/* 顶部：返回 + 前后按钮 */}
       <div
         style={{
           display: "flex",
@@ -195,7 +196,7 @@ export default function DetailView() {
       </h1>
 
       <section className={s.grid} style={{ alignItems: "start" }}>
-        {/* 左侧：大图 + 简介 */}
+        {/* 左列：大图 + 简介 */}
         <article className={s.card} style={{ alignItems: "center" }}>
           <img
             src={img}
@@ -211,7 +212,7 @@ export default function DetailView() {
           </p>
         </article>
 
-        {/* 右侧：信息 */}
+        {/* 右列：详细信息 */}
         <article className={s.card}>
           <h2 className={s.title}>Basics</h2>
           <ul>
@@ -221,12 +222,13 @@ export default function DetailView() {
           </ul>
 
           <h2 className={s.title}>Types</h2>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {/* 居中排列徽章 */}
+          <div className={s.pillsRow}>
             {types.length
               ? types.map((t: string) => (
                   <Link
                     key={t}
-                    to={`/?type=${encodeURIComponent(t)}`} // 采用 type 参数过滤
+                    to={`/?type=${encodeURIComponent(t)}`} // 点击回到列表并按类型过滤
                     className={s.pill}
                     style={{ textTransform: "capitalize" }}
                     aria-label={`Filter list by type ${t}`}
@@ -238,7 +240,8 @@ export default function DetailView() {
           </div>
 
           <h2 className={s.title}>Abilities</h2>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {/* 居中排列徽章 */}
+          <div className={s.pillsRow}>
             {abilities.length
               ? abilities.map((a: string) => (
                   <span
