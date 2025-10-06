@@ -1,4 +1,3 @@
-// src/pages/ListView.tsx
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import s from "../styles/layout.module.css";
@@ -8,14 +7,10 @@ import type { PokemonListItem } from "../types";
 type SortKey = "name" | "id";
 type Order = "asc" | "desc";
 type NameBand = "all" | "A-F" | "G-L" | "M-R" | "S-Z";
-
-/** 预设区间的类型 */
-type IdPreset = "all" | "1-50" | "51-100" | "101-151";
-/** URL 支持任意自定义范围，所以 IdBand = 预设 | string */
-type IdBand = IdPreset | string;
+type IdBand = "all" | "1-50" | "51-100" | "101-151" | string;
 
 const NAME_BANDS: NameBand[] = ["all", "A-F", "G-L", "M-R", "S-Z"];
-const ID_BANDS: IdPreset[] = ["all", "1-50", "51-100", "101-151"];
+const ID_BANDS: Exclude<IdBand, string>[] = ["all", "1-50", "51-100", "101-151"];
 
 function getIdFromUrl(url: string) {
   const parts = url.split("/").filter(Boolean);
@@ -33,14 +28,13 @@ function inNameBand(name: string, band: NameBand) {
   if (band === "M-R") return within("M", "R");
   return within("S", "Z");
 }
-/** 通用 id 段位解析：支持 "all" 或 "lo-hi"（空格可选） */
+/** 支持 "all" 或 "lo-hi" */
 function inIdBand(id: number, band: IdBand) {
   if (!band || band === "all") return true;
   const m = String(band).match(/^(\d+)\s*-\s*(\d+)$/);
-  if (!m) return true; // 非法值视为不过滤
+  if (!m) return true; // 未知值：当作不过滤
   const lo = Number(m[1]);
   const hi = Number(m[2]);
-  if (!Number.isFinite(lo) || !Number.isFinite(hi)) return true;
   const low = Math.min(lo, hi);
   const high = Math.max(lo, hi);
   return id >= low && id <= high;
@@ -73,14 +67,7 @@ function Chip({
     <button
       onClick={onClick}
       aria-pressed={active}
-      style={{
-        margin: 4,
-        padding: "6px 12px",
-        borderRadius: 999,
-        border: active ? "2px solid #111" : "1px solid #ccc",
-        background: active ? "#f2f2f2" : "#fff",
-        cursor: "pointer",
-      }}
+      className={`${s.chipBtn} ${active ? s.chipBtnActive : ""}`}
     >
       {children}
     </button>
@@ -96,7 +83,7 @@ export default function ListView() {
   const [nameBand, setNameBand] = useState<NameBand>((sp.get("nameBand") as NameBand) ?? "all");
   const [idBand, setIdBand] = useState<IdBand>((sp.get("idBand") as IdBand) ?? "all");
 
-  // 支持 type=xxx（从详情页类型点击带回）
+  // 从详情页带回的 type=xxx（点击 Type chip）
   const [type, setType] = useState<string>(sp.get("type") ?? "");
   const [typeIds, setTypeIds] = useState<Set<number> | null>(null);
 
@@ -131,7 +118,7 @@ export default function ListView() {
     };
   }, []);
 
-  // 当 URL 上有 type 参数时，拉取该类型的 id 集合（有缓存，单请求很快）
+  // 根据 type 拉取该类型的 id 集合（本地有 TTL 缓存）
   useEffect(() => {
     let cancelled = false;
     if (!type) {
@@ -164,7 +151,6 @@ export default function ListView() {
       (it) => inNameBand(it.name, nameBand) && inIdBand(it.id, idBand)
     );
 
-    // 若存在 type 约束，再按 typeIds 过滤
     const afterType =
       type && typeIds ? afterClick.filter((it) => typeIds.has(it.id)) : afterClick;
 
@@ -212,9 +198,9 @@ export default function ListView() {
         </select>
       </div>
 
-      {/* 点击型筛选（可与 type 组合使用） */}
-      <div style={{ margin: "8px 0" }} role="group" aria-label="Filter by Name">
-        <div style={{ marginBottom: 6, fontWeight: 600 }}>Filter by Name</div>
+      {/* Name 过滤 */}
+      <div className={s.chipsRow} role="group" aria-label="Filter by Name">
+        <div className={s.chipsLabel}>Filter by Name</div>
         {NAME_BANDS.map((b) => (
           <Chip
             key={b}
@@ -229,8 +215,9 @@ export default function ListView() {
         ))}
       </div>
 
-      <div style={{ margin: "8px 0" }} role="group" aria-label="Filter by ID">
-        <div style={{ marginBottom: 6, fontWeight: 600 }}>Filter by ID</div>
+      {/* ID 过滤 */}
+      <div className={s.chipsRow} role="group" aria-label="Filter by ID">
+        <div className={s.chipsLabel}>Filter by ID</div>
         {ID_BANDS.map((b) => (
           <Chip
             key={b}
@@ -243,28 +230,21 @@ export default function ListView() {
             {b}
           </Chip>
         ))}
-        <div style={{ fontSize: 12, color: "#666", marginTop: 4 }}>
-          Tip: You can also set a custom range in the URL, e.g. <code>?idBand=10-120</code>.
+        <div className={s.tip}>
+          Tip: URL 也支持自定义范围，如 <code>?idBand=10-120</code>
         </div>
       </div>
 
-      {/* 如果存在 type 过滤，在标题下给提示和清除按钮 */}
+      {/* Type 过滤提示 */}
       {type && (
-        <div style={{ margin: "10px 0", fontSize: 14 }}>
+        <div className={s.typeInfo}>
           Filtering by <strong>type: {type}</strong>
           <button
             onClick={() => {
               setType("");
               syncURL({ type: "" });
             }}
-            style={{
-              marginLeft: 8,
-              padding: "2px 8px",
-              borderRadius: 999,
-              border: "1px solid #ccc",
-              background: "#fff",
-              cursor: "pointer",
-            }}
+            className={s.clearBtn}
           >
             Clear type
           </button>
@@ -275,44 +255,16 @@ export default function ListView() {
         <section className={s.grid} aria-busy="true">
           {Array.from({ length: 12 }).map((_, i) => (
             <div key={i} className={s.card} aria-hidden>
-              <div
-                style={{
-                  width: 200,
-                  height: 200,
-                  borderRadius: 12,
-                  background:
-                    "linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%)",
-                  backgroundSize: "400% 100%",
-                  animation: "shimmer 1.2s infinite",
-                }}
-              />
-              <div
-                style={{
-                  height: 14,
-                  width: 120,
-                  marginTop: 10,
-                  background: "#eee",
-                  borderRadius: 6,
-                }}
-              />
-              <div
-                style={{
-                  height: 12,
-                  width: 60,
-                  marginTop: 6,
-                  background: "#f0f0f0",
-                  borderRadius: 6,
-                }}
-              />
+              <div className={s.skelBox} />
+              <div className={s.skelLine} />
+              <div className={s.skelLineSm} />
             </div>
           ))}
         </section>
       )}
 
       {!loading && list.length === 0 && (
-        <div style={{ margin: "12px 0", opacity: 0.8 }}>
-          No matches. Try adjusting search or filters.
-        </div>
+        <div className={s.empty}>No matches. Try adjusting search or filters.</div>
       )}
 
       {!loading && list.length > 0 && (
@@ -326,7 +278,6 @@ export default function ListView() {
                 loading="lazy"
                 width={200}
                 height={200}
-                style={{ objectFit: "contain" }}
               />
               <div className={s.title}>{it.name}</div>
               <div className={s.id}>#{it.id}</div>
