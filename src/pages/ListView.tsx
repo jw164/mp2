@@ -8,11 +8,14 @@ import type { PokemonListItem } from "../types";
 type SortKey = "name" | "id";
 type Order = "asc" | "desc";
 type NameBand = "all" | "A-F" | "G-L" | "M-R" | "S-Z";
-/** 支持预设值 + 任意自定义区间（例如 "10-120"） */
-type IdBand = "all" | "1-50" | "51-100" | "101-151" | string;
+
+/** 预设区间的类型 */
+type IdPreset = "all" | "1-50" | "51-100" | "101-151";
+/** URL 支持任意自定义范围，所以 IdBand = 预设 | string */
+type IdBand = IdPreset | string;
 
 const NAME_BANDS: NameBand[] = ["all", "A-F", "G-L", "M-R", "S-Z"];
-const ID_BANDS: Exclude<IdBand, string>[] = ["all", "1-50", "51-100", "101-151"];
+const ID_BANDS: IdPreset[] = ["all", "1-50", "51-100", "101-151"];
 
 function getIdFromUrl(url: string) {
   const parts = url.split("/").filter(Boolean);
@@ -34,10 +37,7 @@ function inNameBand(name: string, band: NameBand) {
 function inIdBand(id: number, band: IdBand) {
   if (!band || band === "all") return true;
   const m = String(band).match(/^(\d+)\s*-\s*(\d+)$/);
-  if (!m) {
-    // 兼容未知值：不生效（视为不过滤）
-    return true;
-  }
+  if (!m) return true; // 非法值视为不过滤
   const lo = Number(m[1]);
   const hi = Number(m[2]);
   if (!Number.isFinite(lo) || !Number.isFinite(hi)) return true;
@@ -243,7 +243,6 @@ export default function ListView() {
             {b}
           </Chip>
         ))}
-        {/* 提示：URL 还支持自定义范围，例如 ?idBand=10-120 */}
         <div style={{ fontSize: 12, color: "#666", marginTop: 4 }}>
           Tip: You can also set a custom range in the URL, e.g. <code>?idBand=10-120</code>.
         </div>
@@ -338,4 +337,3 @@ export default function ListView() {
     </main>
   );
 }
-
