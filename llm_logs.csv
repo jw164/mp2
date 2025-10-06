@@ -1,0 +1,6 @@
+date,tool_or_service,prompt_or_topic,files_changed,summary_of_changes,notes
+2025-10-06,ChatGPT,GitHub Pages deployment: actions error debugging,.github/workflows/deploy.yml,Fixed node cache and CI=false; ensured uploading build directory,Followed official actions docs
+2025-10-06,ChatGPT,ListView filtering & sorting enhancements,src/pages/ListView.tsx; src/styles/layout.module.css,Added name band / id band / type filters; unified styles and skeleton loader,URL supports ?idBand=10-120
+2025-10-06,ChatGPT,DetailView layout and centering,src/pages/DetailView.tsx; src/styles/layout.module.css,Improved two-column layout; centered chips; Prev/Next; type link returns to list with filter,No third-party libs
+2025-10-06,ChatGPT,404/HashRouter and basename setup,public/404.html; src/App.tsx,Ensured routing works under GitHub Pages subpath,Used HashRouter/basename
+2025-10-06,ChatGPT,README writing and submission guide,README.md,Completed project description/features/how-to-run,—
