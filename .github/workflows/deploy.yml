@@ -10,7 +10,7 @@ permissions:
   pages: write
   id-token: write
 
-# 保证只有最新一次部署，老的自动取消（避免相互“Cancel”）
+# 只保留最新一次运行，避免互相取消
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -27,19 +27,17 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: package-lock.json  # 依赖缓存基于锁文件
 
-      # 尝试 npm ci；如果 lock 文件缺失或不兼容则回退到 npm i
       - name: Install dependencies
         run: npm ci || npm i
 
       - name: Build
         run: npm run build
 
-      # 这一步很关键：配置 Pages 环境
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      # 上传构建产物
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
