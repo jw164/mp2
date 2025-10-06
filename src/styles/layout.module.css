@@ -51,4 +51,9 @@
   border: 2px solid #111;
   background: #f6f6f6;
 }
+@keyframes shimmer {
+  0% { background-position: 0% 0; }
+  100% { background-position: -135% 0; }
+}
+
 
