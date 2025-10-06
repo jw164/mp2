@@ -5,7 +5,8 @@ export const api = axios.create({
   baseURL: "https://pokeapi.co/api/v2",
 });
 
-const TTL = 1000 * 60 * 30;
+const TTL = 1000 * 60 * 30; 
+
 function getCache<T>(key: string): T | null {
   try {
     const raw = localStorage.getItem(key);
@@ -46,39 +47,21 @@ export async function getPokemonById(id: number): Promise<Pokemon> {
   return data;
 }
 
-export async function getManyPokemonDetails(ids: number[]): Promise<Pokemon[]> {
-  const results: Pokemon[] = [];
-  for (const id of ids) {
-    const c = getCache<Pokemon>(`poke:${id}`);
-    if (c) results.push(c);
-  }
-  const missing = ids.filter((id) => !results.find((p) => p.id === id));
-  if (missing.length) {
-    const fetched = await Promise.all(missing.map((id) => getPokemonById(id)));
-    results.push(...fetched);
-  }
-  return results.sort((a, b) => a.id - b.id);
-}
-// ---- utils: 从 URL 抽取 id（例如 https://pokeapi.co/api/v2/pokemon/65/ -> 65）
-function _idFromUrl(url: string | undefined | null): number | null {
-  if (!url) return null;
-  const m = url.match(/\/pokemon\/(\d+)\//i);
-  return m ? Number(m[1]) : null;
-}
-
-/** 根据 type 名称拿到该类型下的所有宝可梦 id（含缓存，单请求，超快） */
-export async function getPokemonIdsByType(typeName: string): Promise<number[]> {
-  const key = `type:${typeName.toLowerCase()}`;
+export async function getPokemonIdsByType(type: string): Promise<number[]> {
+  const key = `type:${type.toLowerCase()}`;
   const cached = getCache<number[]>(key);
   if (cached) return cached;
 
-  const { data } = await api.get(`/type/${typeName.toLowerCase()}`);
-  const ids =
-    (data?.pokemon as Array<{ pokemon: { url: string } }> | undefined)?.map((x) =>
-      _idFromUrl(x?.pokemon?.url)
-    ) || [];
+  const { data } = await api.get(`/type/${type.toLowerCase()}`);
+  const ids: number[] = (data?.pokemon as any[])
+    .map((p) => {
+      const m = String(p?.pokemon?.url || "").match(/\/pokemon\/(\d+)\/?$/);
+      return m ? Number(m[1]) : NaN;
+    })
+    .filter((n) => Number.isFinite(n))
+    .sort((a, b) => a - b);
 
-  const ok = ids.filter((n): n is number => Number.isFinite(n));
-  setCache(key, ok);
-  return ok;
+  setCache(key, ids);
+  return ids;
 }
+
