@@ -1,30 +1,50 @@
 name: Deploy to GitHub Pages
+
 on:
   push:
     branches: ["main"]
   workflow_dispatch: {}
+
 permissions:
   contents: read
   pages: write
   id-token: write
+
+# 保证只有最新一次部署，老的自动取消（避免相互“Cancel”）
 concurrency:
   group: "pages"
   cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci || npm i
-      - run: npm run build
-        env:
-          CI: false
-      - uses: actions/upload-pages-artifact@v3
+          cache: npm
+
+      # 尝试 npm ci；如果 lock 文件缺失或不兼容则回退到 npm i
+      - name: Install dependencies
+        run: npm ci || npm i
+
+      - name: Build
+        run: npm run build
+
+      # 这一步很关键：配置 Pages 环境
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      # 上传构建产物
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: build
+          path: ./build
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -32,8 +52,10 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - id: deployment
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
+
   
 
 
