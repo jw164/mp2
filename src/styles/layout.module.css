@@ -16,7 +16,7 @@
 .input { padding: .5rem; min-width: 260px; }
 .select { padding: .5rem; }
 
-/* 栅格与卡片 */
+/* 通用栅格与卡片 */
 .grid {
   display: grid;
   gap: 1rem;
@@ -52,6 +52,10 @@
   background: #f6f6f6;
 }
 
+/* 让卡片内的名字与编号居中显示（List/Gallery） */
+.card .title { width: 100%; text-align: center; }
+.card .id    { width: 100%; text-align: center; }
+
 /* 加载骨架动画 */
 @keyframes shimmer {
   0% { background-position: 0% 0; }
@@ -76,18 +80,39 @@
   color: inherit;
   line-height: 1;
 }
-.pill:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,.08);
-}
-/* 让卡片内的名字与编号居中显示 */
-.card .title {
-  width: 100%;
-  text-align: center;
+.pill:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+
+/* 居中排列的徽章行 */
+.pillsRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center; /* 居中 */
 }
 
-.card .id {
-  width: 100%;
-  text-align: center;
+/* 详情页专用：两列、整体置中、卡片不拉得太宽 */
+.detailGrid {
+  grid-template-columns: 1fr;        /* 小屏 1 列 */
+  justify-content: center;           /* 整体居中网格 */
+  justify-items: stretch;            /* 列内卡片铺满列宽 */
+  column-gap: 1.25rem;
+  row-gap: 1rem;
 }
+
+@media (min-width: 900px) {
+  .detailGrid {
+    grid-template-columns: 1fr 1fr;  /* ≥900px 两列 */
+    max-width: 1100px;               /* 防止过宽 */
+    margin-inline: auto;             /* 网格本身居中 */
+  }
+}
+
+/* 详情页每列卡片的最大宽度，避免过窄或过宽 */
+.detailCol {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;                    /* 列内再居中 */
+}
+
 
 
