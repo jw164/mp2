@@ -3,26 +3,23 @@
   <head>
     <meta charset="utf-8" />
     <title>Redirecting…</title>
+
     <meta http-equiv="refresh" content="0; url=/mp2/" />
+  </head>
+  <body>
     <script>
       (function () {
         var l = window.location;
-        var path = l.pathname || "/";
-        var prefix = "/mp2";
-        if (path.toLowerCase().indexOf(prefix) === 0) {
-          path = path.slice(prefix.length) || "/";
-        }
-        var newUrl = prefix + "/" + (path.replace(/^\/+/, ""));
+        var base = "/mp2/";              // 你的仓库根路径
+        
+        var newUrl = base;
         if (l.search) newUrl += l.search;
         if (l.hash) newUrl += l.hash;
-
-        if (!newUrl || newUrl === prefix + "//") newUrl = prefix + "/";
-
+      
+        if (!l.hash) newUrl += "#/";
         l.replace(newUrl);
       })();
     </script>
-  </head>
-  <body>
     Redirecting to <a href="/mp2/">/mp2/</a> …
   </body>
 </html>
