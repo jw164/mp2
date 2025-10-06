@@ -3,21 +3,12 @@ import ListView from "./pages/ListView";
 import GalleryView from "./pages/GalleryView";
 import DetailView from "./pages/DetailView";
 import NotFound from "./pages/NotFound";
-import "./styles/layout.module.css";
+import s from "./styles/layout.module.css";
 
 export default function App() {
   return (
     <Router>
-      <header
-        style={{
-          padding: "1rem",
-          display: "flex",
-          justifyContent: "center",
-          gap: "2rem",
-          borderBottom: "1px solid #ddd",
-          background: "#fafafa",
-        }}
-      >
+      <header className={s.appHeader}>
         <Link to="/">List</Link>
         <Link to="/gallery">Gallery</Link>
       </header>
