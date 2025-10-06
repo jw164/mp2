@@ -1,104 +1,117 @@
 // src/pages/GalleryView.tsx
-import React, { useEffect, useState } from "react";
-import { getPokemonList, getManyPokemonDetails } from "../api/pokeApi";
-import type { Pokemon, PokemonListItem } from "../types";
-import "../styles/layout.module.css";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import s from "../styles/layout.module.css";
+import { getPokemonList } from "../api/pokeApi";
+import type { PokemonListItem } from "../types";
 
-const GalleryView: React.FC = () => {
-  const [pokemons, setPokemons] = useState<Pokemon[]>([]);
+/** 提取 PokeAPI 列表项中的 id */
+function getIdFromUrl(url: string) {
+  const parts = url.split("/").filter(Boolean);
+  return Number(parts[parts.length - 1]);
+}
+
+/** 官方 artwork CDN */
+function artworkUrl(id: number) {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+}
+
+export default function GalleryView() {
   const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<Array<PokemonListItem & { id: number }>>(
+    []
+  );
 
   useEffect(() => {
-    async function fetchData() {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
       try {
-        const list: PokemonListItem[] = await getPokemonList(60, 0);
-        const ids = list.map((_, idx) => idx + 1);
-        const details = await getManyPokemonDetails(ids);
-        setPokemons(details);
-      } catch (err) {
-        console.error("Error fetching Pokémon:", err);
+        const list = await getPokemonList(151, 0);
+        const withId = list.map((it) => ({ ...it, id: getIdFromUrl(it.url) }));
+        if (!cancelled) setItems(withId);
+      } catch {
+        if (!cancelled) setItems([]);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-    }
-    fetchData();
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const getImage = (p: Pokemon) => {
-    return (
-      p.sprites.other?.["official-artwork"]?.front_default ||
-      p.sprites.front_default ||
-      ""
-    );
-  };
-
-  if (loading) return <div style={{ textAlign: "center" }}>Loading...</div>;
+  // 画廊保持按 ID 升序
+  const gallery = useMemo(
+    () => [...items].sort((a, b) => a.id - b.id),
+    [items]
+  );
 
   return (
-    <div style={styles.container}>
-      {pokemons.map((p) => (
-        <div key={p.id} style={styles.card}>
-          <img
-            src={getImage(p)}
-            alt={p.name}
-            style={styles.image}
-            loading="lazy"
-          />
-          <h3 style={styles.title}>
-            #{p.id} {p.name.charAt(0).toUpperCase() + p.name.slice(1)}
-          </h3>
-          <div style={styles.types}>
-            {p.types.map((t) => (
-              <span key={t.slot} style={styles.typeBadge}>
-                {t.type.name}
-              </span>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
+    <main className={s.container}>
+      <h1>Pokémon Gallery</h1>
+
+      {loading && (
+        <section className={s.grid} aria-busy="true">
+          {Array.from({ length: 24 }).map((_, i) => (
+            <div key={i} className={s.card} aria-hidden>
+              <div
+                style={{
+                  width: 200,
+                  height: 200,
+                  borderRadius: 12,
+                  background:
+                    "linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%)",
+                  backgroundSize: "400% 100%",
+                  animation: "shimmer 1.2s infinite",
+                }}
+              />
+              <div
+                style={{
+                  height: 14,
+                  width: 120,
+                  marginTop: 10,
+                  background: "#eee",
+                  borderRadius: 6,
+                }}
+              />
+            </div>
+          ))}
+        </section>
+      )}
+
+      {!loading && gallery.length === 0 && (
+        <p style={{ marginTop: 12, opacity: 0.8 }}>
+          Nothing to show right now.
+        </p>
+      )}
+
+      {!loading && gallery.length > 0 && (
+        <section className={s.grid}>
+          {gallery.map((it) => (
+            <Link
+              key={it.id}
+              to={`/pokemon/${it.id}`}
+              className={s.card}
+              aria-label={`Open details for ${it.name}`}
+            >
+              <img
+                className={s.thumb}
+                src={artworkUrl(it.id)}
+                alt={it.name}
+                loading="lazy"
+                width={200}
+                height={200}
+                style={{ objectFit: "contain" }}
+              />
+              <div className={s.title} style={{ textTransform: "capitalize" }}>
+                {it.name}
+              </div>
+              <div className={s.id}>#{it.id}</div>
+            </Link>
+          ))}
+        </section>
+      )}
+    </main>
   );
-};
-
-const styles: { [key: string]: React.CSSProperties } = {
-  container: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    gap: "1.5rem",
-    padding: "2rem",
-  },
-  card: {
-    background: "#ffffff",
-    borderRadius: "16px",
-    boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
-    padding: "1rem",
-    textAlign: "center",
-    transition: "transform 0.2s ease-in-out",
-  },
-  image: {
-    width: "100px",
-    height: "100px",
-    objectFit: "contain",
-  },
-  title: {
-    fontSize: "1rem",
-    fontWeight: 600,
-    textTransform: "capitalize",
-    marginTop: "0.5rem",
-  },
-  types: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "0.5rem",
-    marginTop: "0.5rem",
-  },
-  typeBadge: {
-    background: "#f0f0f0",
-    borderRadius: "8px",
-    padding: "0.2rem 0.6rem",
-    fontSize: "0.8rem",
-    textTransform: "capitalize",
-  },
-};
-
-export default GalleryView;
+}
