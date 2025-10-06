@@ -52,7 +52,7 @@ export default function DetailView() {
         if (!alive) return;
         setData(p);
 
-        // 物种介绍（英文优先）
+        // 物种介绍（英文）
         try {
           const { data: sp } = await api.get(`/pokemon-species/${pid}`);
           const entry = (sp?.flavor_text_entries as Array<any>)?.find(
@@ -195,9 +195,10 @@ export default function DetailView() {
         {padId(data.id)} {data.name}
       </h1>
 
-      <section className={s.grid} style={{ alignItems: "start" }}>
+      {/* 👉 使用专用两列网格并整体居中 */}
+      <section className={`${s.grid} ${s.detailGrid}`}>
         {/* 左列：大图 + 简介 */}
-        <article className={s.card} style={{ alignItems: "center" }}>
+        <article className={`${s.card} ${s.detailCol}`} style={{ alignItems: "center" }}>
           <img
             src={img}
             alt={data.name}
@@ -213,7 +214,7 @@ export default function DetailView() {
         </article>
 
         {/* 右列：详细信息 */}
-        <article className={s.card}>
+        <article className={`${s.card} ${s.detailCol}`}>
           <h2 className={s.title}>Basics</h2>
           <ul>
             <li>Height: {data.height ?? "—"}</li>
@@ -291,5 +292,6 @@ export default function DetailView() {
     </main>
   );
 }
+
 
 
