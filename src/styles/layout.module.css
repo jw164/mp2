@@ -79,4 +79,15 @@
 .pill:hover {
   box-shadow: 0 2px 8px rgba(0,0,0,.08);
 }
+/* 让卡片内的名字与编号居中显示 */
+.card .title {
+  width: 100%;
+  text-align: center;
+}
+
+.card .id {
+  width: 100%;
+  text-align: center;
+}
+
 
