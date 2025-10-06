@@ -1,4 +1,3 @@
-// src/pages/DetailView.tsx
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import s from "../styles/layout.module.css";
@@ -42,8 +41,9 @@ export default function DetailView() {
     setData(null);
     setIntro("");
 
-    // 路由切换回到顶部
-    try { window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }); } catch {}
+    try {
+      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    } catch {}
 
     (async () => {
       try {
@@ -51,7 +51,7 @@ export default function DetailView() {
         if (!alive) return;
         setData(p);
 
-        // 物种简介（英文）
+        // 物种介绍（英文）
         try {
           const { data: sp } = await api.get(`/pokemon-species/${pid}`);
           const entry = (sp?.flavor_text_entries as Array<any>)?.find(
@@ -62,9 +62,7 @@ export default function DetailView() {
             .replace(/\s+/g, " ")
             .trim();
           if (alive) setIntro(text);
-        } catch {
-          /* 忽略简介错误 */
-        }
+        } catch {}
       } catch {
         if (alive) setError("Failed to load data.");
       } finally {
@@ -72,37 +70,53 @@ export default function DetailView() {
       }
     })();
 
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [pid]);
 
   const prevId = pid > MIN_ID ? pid - 1 : null;
   const nextId = pid < MAX_ID ? pid + 1 : null;
 
-  const goPrev = useCallback(() => { if (prevId) navigate(`/pokemon/${prevId}`); }, [navigate, prevId]);
-  const goNext = useCallback(() => { if (nextId) navigate(`/pokemon/${nextId}`); }, [navigate, nextId]);
+  const goPrev = useCallback(() => {
+    if (prevId) navigate(`/pokemon/${prevId}`);
+  }, [navigate, prevId]);
+  const goNext = useCallback(() => {
+    if (nextId) navigate(`/pokemon/${nextId}`);
+  }, [navigate, nextId]);
 
   // 键盘 ← / → 导航
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft" && prevId) { e.preventDefault(); goPrev(); }
-      else if (e.key === "ArrowRight" && nextId) { e.preventDefault(); goNext(); }
+      if (e.key === "ArrowLeft" && prevId) {
+        e.preventDefault();
+        goPrev();
+      } else if (e.key === "ArrowRight" && nextId) {
+        e.preventDefault();
+        goNext();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [goPrev, goNext, prevId, nextId]);
 
-  /** ---------- 渲染 ---------- */
   if (loading) {
     return (
       <main className={s.container}>
         <div className={s.card} aria-busy="true" style={{ maxWidth: 720, margin: "0 auto" }}>
-          <div style={{
-            width: 300, height: 300, borderRadius: 16,
-            background: "linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%)",
-            backgroundSize: "400% 100%", animation: "shimmer 1.2s infinite"
-          }}/>
-          <div style={{ height: 18, width: 180, marginTop: 10, background: "#eee", borderRadius: 6 }}/>
-          <div style={{ height: 12, width: 240, marginTop: 6, background: "#f0f0f0", borderRadius: 6 }}/>
+          <div
+            style={{
+              width: 300,
+              height: 300,
+              borderRadius: 16,
+              background:
+                "linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%)",
+              backgroundSize: "400% 100%",
+              animation: "shimmer 1.2s infinite",
+            }}
+          />
+          <div style={{ height: 18, width: 180, marginTop: 10, background: "#eee", borderRadius: 6 }} />
+          <div style={{ height: 12, width: 240, marginTop: 6, background: "#f0f0f0", borderRadius: 6 }} />
         </div>
       </main>
     );
@@ -112,27 +126,67 @@ export default function DetailView() {
     return (
       <main className={s.container}>
         <h1 className={s.title}>Not Found</h1>
-        <p>{error || "This Pokémon does not exist in the current range."} <Link to="/">Back to list</Link></p>
+        <p>
+          {error || "This Pokémon does not exist in the current range."}{" "}
+          <Link to="/">Back to list</Link>
+        </p>
       </main>
     );
   }
 
   const img = pickImage(data) || artworkUrl(data.id);
   const types = (data as any)?.types?.map((t: any) => t.type?.name) ?? [];
-  const abilities = (data as any)?.abilities?.map((a: any) => a.ability?.name) ?? [];
+  const abilities =
+    (data as any)?.abilities?.map((a: any) => a.ability?.name) ?? [];
   const stats = (data as any)?.stats ?? [];
 
   return (
     <main className={s.container}>
-      {/* 顶部控制区 */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+      {/* 顶部导航 + 返回 */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 12,
+          flexWrap: "wrap",
+        }}
+      >
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Link to="/" className={s.card} style={{ padding: ".5rem .75rem" }}>← Back to List</Link>
-          <Link to="/gallery" className={s.card} style={{ padding: ".5rem .75rem" }}>Gallery</Link>
+          <Link to="/" className={s.card} style={{ padding: ".5rem .75rem" }}>
+            ← Back to List
+          </Link>
+          <Link to="/gallery" className={s.card} style={{ padding: ".5rem .75rem" }}>
+            Gallery
+          </Link>
         </div>
         <div>
-          <button onClick={goPrev} disabled={!prevId} style={{ marginRight: 8, padding: ".5rem .75rem", cursor: prevId ? "pointer" : "not-allowed" }} aria-disabled={!prevId} aria-label="Previous Pokémon">◀ PREVIOUS</button>
-          <button onClick={goNext} disabled={!nextId} style={{ padding: ".5rem .75rem", cursor: nextId ? "pointer" : "not-allowed" }} aria-disabled={!nextId} aria-label="Next Pokémon">NEXT ▶</button>
+          <button
+            onClick={goPrev}
+            disabled={!prevId}
+            style={{
+              marginRight: 8,
+              padding: ".5rem .75rem",
+              cursor: prevId ? "pointer" : "not-allowed",
+            }}
+            aria-disabled={!prevId}
+            aria-label="Previous Pokémon"
+          >
+            ◀ PREVIOUS
+          </button>
+          <button
+            onClick={goNext}
+            disabled={!nextId}
+            style={{
+              padding: ".5rem .75rem",
+              cursor: nextId ? "pointer" : "not-allowed",
+            }}
+            aria-disabled={!nextId}
+            aria-label="Next Pokémon"
+          >
+            NEXT ▶
+          </button>
         </div>
       </div>
 
@@ -141,7 +195,7 @@ export default function DetailView() {
       </h1>
 
       <section className={s.grid} style={{ alignItems: "start" }}>
-        {/* 左侧：图片 + 简介 */}
+        {/* 左侧：大图 + 简介 */}
         <article className={s.card} style={{ alignItems: "center" }}>
           <img
             src={img}
@@ -152,7 +206,9 @@ export default function DetailView() {
             style={{ objectFit: "contain" }}
           />
           {intro && <p style={{ marginTop: 8, lineHeight: 1.5 }}>{intro}</p>}
-          <p style={{ marginTop: 8, color: "#666", fontSize: 12 }}>Tip: Use ← / → keys to navigate.</p>
+          <p style={{ marginTop: 8, color: "#666", fontSize: 12 }}>
+            Tip: Use ← / → keys to navigate.
+          </p>
         </article>
 
         {/* 右侧：信息 */}
@@ -170,9 +226,10 @@ export default function DetailView() {
               ? types.map((t: string) => (
                   <Link
                     key={t}
-                    to={`/?q=${encodeURIComponent(t)}`}  // ← 点击返回列表并带上过滤
-                    className={s.chip as any}
-                    style={{ padding: "4px 10px", border: "1px solid #ddd", borderRadius: 999, textTransform: "capitalize" }}
+                    to={`/?type=${encodeURIComponent(t)}`} // 采用 type 参数过滤
+                    className={s.pill}
+                    style={{ textTransform: "capitalize" }}
+                    aria-label={`Filter list by type ${t}`}
                   >
                     {t}
                   </Link>
@@ -184,7 +241,11 @@ export default function DetailView() {
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {abilities.length
               ? abilities.map((a: string) => (
-                  <span key={a} style={{ padding: "4px 10px", border: "1px solid #ddd", borderRadius: 999, textTransform: "capitalize" }}>
+                  <span
+                    key={a}
+                    className={s.pill}
+                    style={{ textTransform: "capitalize" }}
+                  >
                     {a}
                   </span>
                 ))
@@ -196,14 +257,27 @@ export default function DetailView() {
             {stats.map((st: any) => {
               const label = st.stat?.name;
               const val = Number(st.base_stat) || 0;
-              const w = Math.min(100, val); // 迷你条：100 为上限
+              const w = Math.min(100, val);
               return (
                 <li key={label} style={{ margin: "6px 0" }}>
-                  <div style={{ fontSize: 12, textTransform: "capitalize", marginBottom: 4 }}>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      textTransform: "capitalize",
+                      marginBottom: 4,
+                    }}
+                  >
                     {label}: {val}
                   </div>
                   <div style={{ height: 8, background: "#eee", borderRadius: 999 }}>
-                    <div style={{ width: `${w}%`, height: "100%", background: "#bbb", borderRadius: 999 }} />
+                    <div
+                      style={{
+                        width: `${w}%`,
+                        height: "100%",
+                        background: "#bbb",
+                        borderRadius: 999,
+                      }}
+                    />
                   </div>
                 </li>
               );
@@ -214,4 +288,5 @@ export default function DetailView() {
     </main>
   );
 }
+
 
